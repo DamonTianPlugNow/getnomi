@@ -1,0 +1,35 @@
+services:
+  nomi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nomi-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.production
+    networks:
+      - nomi-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nomi-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/certbot:/var/www/certbot:ro
+    depends_on:
+      - nomi
+    networks:
+      - nomi-network
+
+networks:
+  nomi-network:
+    driver: bridge
