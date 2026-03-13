@@ -1,8 +1,8 @@
-# A2A Platform - Development Guide
+# Nomi - Development Guide
 
 ## Project Overview
 
-A2A (Agent-to-Agent) is a relationship matching platform where users create memory profiles, AI generates agent profiles, and agents match users for real meetings.
+Nomi (Know me) is a platform that helps users create and maintain their digital world manual - a portable personal context powered by AI conversation. Users can export their profile as a .md file and optionally match with like-minded people.
 
 ## Tech Stack
 
@@ -22,15 +22,18 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/             # Auth pages (login, signup)
 │   ├── (dashboard)/        # Main app pages
+│   │   ├── dashboard/      # Home dashboard
+│   │   ├── profile/        # Profile view & chat
+│   │   ├── onboarding/     # AI onboarding chat
+│   │   ├── matches/        # Match list & details
+│   │   └── meetings/       # Meeting list & feedback
 │   ├── api/                # API Routes
 │   └── auth/               # Auth callbacks
-├── components/             # React components
 ├── lib/                    # Core libraries
 │   ├── supabase/           # Supabase clients
 │   ├── ai/                 # Claude/OpenAI
 │   ├── zoom/               # Zoom API
-│   └── email/              # Resend
-├── services/               # Business logic
+��   └── email/              # Resend
 ├── inngest/                # Background tasks
 │   ├── client.ts
 │   └── functions/
@@ -48,6 +51,7 @@ supabase/
 - `src/lib/ai/embedding.ts` - OpenAI embeddings
 - `src/inngest/functions/` - Background job definitions
 - `supabase/migrations/` - Database schema
+- `src/app/api/profile/export/route.ts` - .md export endpoint
 
 ## Development Commands
 
@@ -69,6 +73,9 @@ pnpm type-check
 
 # Lint
 pnpm lint
+
+# Build
+pnpm build
 ```
 
 ## Environment Variables
@@ -80,6 +87,7 @@ Copy `.env.example` to `.env.local` and fill in:
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 - `ANTHROPIC_API_KEY` - Claude API key
 - `OPENAI_API_KEY` - OpenAI API key
+- `OPENAI_BASE_URL` - OpenAI base URL (default: https://aihubmix.com/v1)
 - `ZOOM_*` - Zoom Server-to-Server OAuth credentials
 - `RESEND_API_KEY` - Resend API key
 - `NEXTAUTH_SECRET` - Random secret for NextAuth
@@ -93,19 +101,30 @@ Copy `.env.example` to `.env.local` and fill in:
 
 ## Core Flows
 
-### Profile Creation
+### Onboarding (AI Chat)
 1. User signs up via OAuth
-2. User fills memory profile (or uses AI chat)
+2. AI chat collects profile information naturally
 3. `profile/created` event triggers `generateAgentProfiles`
 4. Agent profiles generated with embeddings
 5. Profile marked as active
 
-### Matching
-1. `profile/created` or daily cron triggers `findMatches`
-2. Vector search finds candidates (pgvector)
-3. Claude ranks candidates
-4. Matches created with 48h expiry
-5. Users notified via Realtime + email
+### Profile Update
+1. User clicks "Update with AI" on profile page
+2. `/profile/chat` - AI conversation to update info
+3. Changes saved, agents regenerated if needed
+
+### Export .md
+1. User clicks "Export .md" on profile page
+2. `GET /api/profile/export` generates Markdown
+3. File downloaded as `{display_name}.md`
+
+### Matching (Optional)
+1. User enables matching toggle on profile
+2. `profile/created` or daily cron triggers `findMatches`
+3. Vector search finds candidates (pgvector)
+4. Claude ranks candidates
+5. Matches created with 48h expiry
+6. Users notified via Realtime + email
 
 ### Meeting
 1. Both users approve match
@@ -114,13 +133,14 @@ Copy `.env.example` to `.env.local` and fill in:
 4. Zoom meeting created
 5. Meeting brief generated
 6. Notification emails sent
-7. Reminder sent 5 min before
 
 ## API Routes
 
 - `GET /api/profile` - Get current user's profile
 - `POST /api/profile` - Create profile
-- `PUT /api/profile` - Update profile
+- `PUT /api/profile` - Update profile (or just toggle `is_active`)
+- `GET /api/profile/export` - Export profile as .md
+- `POST /api/chat/onboarding` - AI chat for profile creation/update
 - `GET /api/match` - List matches
 - `POST /api/match` - Approve/reject match
 - `GET /api/meeting` - List meetings

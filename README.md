@@ -1,14 +1,25 @@
-# Get Nomi, your personal memory assistant
+# Nomi - Your Personal Memory Assistant
 
-Agent-to-Agent relationship matching platform. Create your memory profile, let AI generate your agent, and connect with people who truly match your goals and values.
+Create your AI-powered personal context that works everywhere. Your story, always with you.
 
-## Features
+**Website**: [getnomi.me](https://getnomi.me)
 
-- **AI-Powered Matching**: Claude generates agent profiles and ranks matches
-- **Multiple Relationship Types**: Professional, Dating, Friendship
-- **Automatic Meetings**: Zoom integration with personalized meeting briefs
-- **Real-time Notifications**: Supabase Realtime + email
-- **Reputation System**: Track meeting completion and feedback
+## What is Nomi?
+
+Nomi helps you create and maintain a portable personal context (your own .md file) through AI conversation. This digital manual can be used across any AI agent product - it's your portable digital identity.
+
+### Core Features
+
+- **AI-Powered Memory**: Chat with AI to build and update your personal profile
+- **Portable .md Export**: Download your profile as a Markdown file to use anywhere
+- **Smart Matching**: Optionally connect with like-minded people based on your profile
+- **Multiple Relationship Types**: Professional networking, Dating, Friendship
+
+### How It Works
+
+1. **Chat with AI** → Nomi learns about you through natural conversation
+2. **Your .md File** → Export your portable personal context anytime
+3. **Match (Optional)** → Connect with others who share your goals and values
 
 ## Quick Start
 
@@ -33,8 +44,24 @@ pnpm inngest:dev
 - Supabase (PostgreSQL + pgvector + Auth)
 - Inngest (Background Jobs)
 - Claude (AI) + OpenAI (Embeddings)
-- Zoom API
+- Zoom API (Meetings)
 - Vercel (Deployment)
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Login, Signup
+│   ├── (dashboard)/       # Dashboard, Profile, Matches, Meetings
+│   └── api/               # API Routes
+├── lib/                   # Shared utilities
+│   ├── ai/               # Claude & OpenAI integration
+│   ├── supabase/         # Database client
+│   └── email/            # Email service
+├── inngest/              # Background jobs
+└── types/                # TypeScript types
+```
 
 See [CLAUDE.md](./CLAUDE.md) for detailed development documentation.
 
