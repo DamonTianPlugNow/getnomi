@@ -20,7 +20,6 @@ export default function SignUpPage() {
       provider: 'linkedin_oidc',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
-        scopes: 'openid profile email',
       },
     });
   };

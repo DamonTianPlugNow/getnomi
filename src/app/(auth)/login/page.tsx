@@ -21,7 +21,6 @@ function LoginContent() {
       provider: 'linkedin_oidc',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
-        scopes: 'openid profile email',
       },
     });
   };
