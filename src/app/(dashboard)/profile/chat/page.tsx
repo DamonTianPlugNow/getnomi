@@ -17,11 +17,11 @@ interface StoredState {
 function TypingIndicator() {
   return (
     <div className="flex justify-start">
-      <div className="bg-white/[0.05] rounded-2xl px-4 py-3">
+      <div className="bg-[#f7f6f3] rounded-xl px-4 py-3">
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
@@ -40,7 +40,6 @@ export default function ProfileChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load existing profile data
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
@@ -51,7 +50,6 @@ export default function ProfileChatPage() {
         return;
       }
 
-      // Fetch current profile
       const { data: profile } = await supabase
         .from('memory_profiles')
         .select('*')
@@ -63,7 +61,6 @@ export default function ProfileChatPage() {
         return;
       }
 
-      // Check for saved chat state
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
@@ -77,19 +74,18 @@ export default function ProfileChatPage() {
         }
       }
 
-      // Start fresh conversation
       setProfileData(profile);
       setMessages([{
         role: 'assistant',
-        content: `欢迎回来！我是 Nomi，你的 AI 助手 👋
+        content: `Welcome back! I'm Nomi, your AI assistant 👋
 
-我可以帮你更新个人档案。你想更新什么信息？比如：
-- 工作变动
-- 新的技能或兴趣
-- 目标调整
-- 或者随便聊聊你最近的变化
+I can help you update your profile. What would you like to change? For example:
+- New job or role
+- Updated skills or interests
+- Changed goals
+- Or just tell me what's new in your life
 
-**有什么新鲜事想告诉我吗？**`,
+**What would you like to update?**`,
       }]);
       setInitialized(true);
     };
@@ -97,7 +93,6 @@ export default function ProfileChatPage() {
     init();
   }, [router]);
 
-  // Save state to localStorage
   useEffect(() => {
     if (initialized && messages.length > 0) {
       const state: StoredState = { messages, profileData };
@@ -105,7 +100,6 @@ export default function ProfileChatPage() {
     }
   }, [messages, profileData, initialized]);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
@@ -145,7 +139,6 @@ export default function ProfileChatPage() {
       }
 
       if (data.isComplete) {
-        // Save profile and redirect
         const saveResponse = await fetch('/api/profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -159,7 +152,7 @@ export default function ProfileChatPage() {
       }
     } catch (err) {
       setIsTyping(false);
-      setError('发送失败，请重试');
+      setError('Failed to send message. Please try again.');
       console.error('Chat error:', err);
     } finally {
       setIsLoading(false);
@@ -179,7 +172,6 @@ export default function ProfileChatPage() {
   };
 
   const handleFinish = async () => {
-    // Save current profile data and go back
     try {
       await fetch('/api/profile', {
         method: 'PUT',
@@ -189,37 +181,37 @@ export default function ProfileChatPage() {
       localStorage.removeItem(STORAGE_KEY);
       router.push('/profile');
     } catch {
-      setError('保存失败');
+      setError('Failed to save');
     }
   };
 
   if (!initialized) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#0077cc] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
+    <div className="min-h-screen bg-white text-[#37352f] flex flex-col">
       {/* Header */}
-      <header className="border-b border-white/[0.06] px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/profile" className="text-white/50 hover:text-white transition">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#e3e2de]">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Link href="/profile" className="p-2 hover:bg-[#f7f6f3] rounded-md transition-colors">
+              <svg className="w-5 h-5 text-[#37352f]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
+            <div>
+              <h1 className="font-semibold text-[#37352f]">Update Profile</h1>
+              <p className="text-sm text-[#37352f]/50">Chat with Nomi to make changes</p>
             </div>
-            <span className="font-medium">Update Your Profile</span>
           </div>
           <button
             onClick={handleFinish}
-            className="px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.05] rounded-lg transition"
+            className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors"
           >
             Done
           </button>
@@ -227,68 +219,71 @@ export default function ProfileChatPage() {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white'
-                  : 'bg-white/[0.05] text-white/90'
-              }`}>
-                {msg.role === 'assistant' ? (
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                      strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                      ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                      li: ({ children }) => <li className="text-white/80">{children}</li>,
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                )}
-              </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-6 py-8">
+          {error && (
+            <div className="mb-4 p-3 bg-[#eb5757]/10 border border-[#eb5757]/20 rounded-lg text-[#eb5757] text-sm">
+              {error}
             </div>
-          ))}
-          {isTyping && <TypingIndicator />}
-          <div ref={messagesEndRef} />
+          )}
+
+          <div className="space-y-6">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-xl px-4 py-3 ${
+                    message.role === 'user'
+                      ? 'bg-[#0077cc] text-white'
+                      : 'bg-[#f7f6f3] text-[#37352f]'
+                  }`}
+                >
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className={message.role === 'user' ? 'text-white font-semibold' : 'text-[#37352f] font-semibold'}>{children}</strong>,
+                        ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                        li: ({ children }) => <li className="mb-1">{children}</li>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isTyping && <TypingIndicator />}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="px-6">
-          <div className="max-w-3xl mx-auto">
-            <p className="text-red-400 text-sm text-center py-2">{error}</p>
-          </div>
-        </div>
-      )}
-
       {/* Input */}
-      <div className="border-t border-white/[0.06] px-6 py-4">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="relative">
+      <div className="sticky bottom-0 bg-white border-t border-[#e3e2de]">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-6 py-4">
+          <div className="flex gap-3">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Tell me what's new..."
+              placeholder="Type your message..."
               rows={1}
-              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 pr-12 text-white placeholder-white/30 focus:outline-none focus:border-violet-500/50 resize-none"
-              disabled={isLoading}
+              className="flex-1 px-4 py-3 border border-[#e3e2de] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] resize-none text-[#37352f] placeholder:text-[#37352f]/40"
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-violet-500 hover:to-fuchsia-500 transition"
+              disabled={!input.trim() || isLoading}
+              className="px-6 py-3 bg-[#0077cc] hover:bg-[#0066b3] disabled:bg-[#e3e2de] disabled:text-[#37352f]/40 text-white font-medium rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                'Send'
+              )}
             </button>
           </div>
         </form>

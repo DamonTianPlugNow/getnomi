@@ -13,7 +13,6 @@ export default async function MatchesPage() {
     redirect('/login');
   }
 
-  // Fetch all matches
   const { data: matches } = await supabase
     .from('matches')
     .select(`
@@ -27,7 +26,6 @@ export default async function MatchesPage() {
     .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
 
-  // Group matches by status
   const pendingMatches = matches?.filter((m) =>
     ['pending', 'half_approved'].includes(m.status)
   ) || [];
@@ -39,37 +37,41 @@ export default async function MatchesPage() {
   const getStatusBadge = (match: typeof matches extends (infer T)[] | null ? T : never) => {
     const isUserA = match.user_a_id === user.id;
     const myApproved = isUserA ? match.user_a_approved : match.user_b_approved;
-    const theirApproved = isUserA ? match.user_b_approved : match.user_a_approved;
 
     if (match.status === 'matched') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Matched</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">Matched</span>;
     }
     if (match.status === 'half_approved') {
       if (myApproved) {
-        return <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700">Waiting for response</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">Waiting</span>;
       } else {
-        return <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">Waiting for you</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">Action needed</span>;
       }
     }
     if (match.status === 'pending') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">New match</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">New</span>;
     }
     if (match.status === 'rejected') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-500">Declined</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Declined</span>;
     }
     if (match.status === 'expired') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-500">Expired</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Expired</span>;
     }
     return null;
   };
 
-  const getIntentEmoji = (intent: string) => {
-    switch (intent) {
-      case 'professional': return '💼';
-      case 'dating': return '💕';
-      case 'friendship': return '🤝';
-      default: return '✨';
-    }
+  const getIntentBadge = (intent: string) => {
+    const config: Record<string, { emoji: string; bg: string; text: string }> = {
+      professional: { emoji: '💼', bg: 'bg-[#0077cc]/10', text: 'text-[#0077cc]' },
+      dating: { emoji: '💕', bg: 'bg-[#eb5757]/10', text: 'text-[#eb5757]' },
+      friendship: { emoji: '🤝', bg: 'bg-[#0f7b6c]/10', text: 'text-[#0f7b6c]' },
+    };
+    const c = config[intent] || config.friendship;
+    return (
+      <span className={`px-2 py-0.5 text-xs font-medium rounded ${c.bg} ${c.text}`}>
+        {c.emoji} {intent}
+      </span>
+    );
   };
 
   const MatchCard = ({ match }: { match: typeof matches extends (infer T)[] | null ? T : never }) => {
@@ -81,56 +83,44 @@ export default async function MatchesPage() {
     return (
       <Link
         href={`/matches/${match.id}`}
-        className="block bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition"
+        className="block p-5 bg-white rounded-xl border border-[#e3e2de] hover:border-[#0077cc]/30 hover:shadow-sm transition-all"
       >
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+          <div className="flex-shrink-0">
             {otherUser?.avatar_url ? (
               <img
                 src={otherUser.avatar_url}
-                alt={otherUser.name || ''}
-                className="w-14 h-14 rounded-full object-cover"
+                alt=""
+                className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
-              <span className="text-xl font-medium text-slate-500">
-                {otherUser?.name?.[0] || '?'}
-              </span>
+              <div className="w-12 h-12 rounded-full bg-[#f7f6f3] flex items-center justify-center">
+                <span className="text-[#37352f]/60 font-medium text-lg">
+                  {otherUser?.name?.[0] || '?'}
+                </span>
+              </div>
             )}
           </div>
-
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-slate-900 truncate">
-                {otherUser?.name || 'Unknown'}
+              <h3 className="font-semibold text-[#37352f] truncate">
+                {otherUser?.name || 'Anonymous'}
               </h3>
-              <span className="text-lg" title={match.intent}>
-                {getIntentEmoji(match.intent)}
-              </span>
-            </div>
-
-            <p className="text-sm text-slate-600 line-clamp-2 mb-2">
-              {otherAgent?.summary}
-            </p>
-
-            <div className="flex items-center gap-2">
               {getStatusBadge(match)}
+            </div>
+            <p className="text-sm text-[#37352f]/60 line-clamp-2 mb-2">
+              {otherAgent?.summary || 'No summary available'}
+            </p>
+            <div className="flex items-center gap-2">
+              {getIntentBadge(match.intent)}
               {hasMeeting && (
-                <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
-                  Meeting scheduled
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-[#0f7b6c]/10 text-[#0f7b6c]">
+                  📅 Meeting scheduled
                 </span>
               )}
-              <span className="text-xs text-slate-400">
-                {Math.round(match.match_score * 100)}% match
-              </span>
             </div>
           </div>
-
-          <svg
-            className="w-5 h-5 text-slate-400 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-5 h-5 text-[#37352f]/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
@@ -139,42 +129,38 @@ export default async function MatchesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f7f6f3] text-[#37352f]">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold text-slate-900">
-            Nomi
+      <header className="sticky top-0 z-50 bg-white border-b border-[#e3e2de]">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
+            </div>
+            <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
           </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/matches" className="text-blue-600 font-medium">
-              Matches
+
+          <nav className="flex items-center gap-1">
+            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              Dashboard
             </Link>
-            <Link href="/meetings" className="text-slate-600 hover:text-slate-900 transition">
+            <Link href="/meetings" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Meetings
             </Link>
-            <Link href="/profile" className="text-slate-600 hover:text-slate-900 transition">
+            <Link href="/profile" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Profile
             </Link>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Your Matches</h1>
-            <p className="text-slate-600">
-              {matches?.length || 0} total matches
-            </p>
-          </div>
-        </div>
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold text-[#37352f] mb-8">Your Matches</h1>
 
         {/* Pending Matches */}
         {pendingMatches.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
               Pending ({pendingMatches.length})
             </h2>
             <div className="space-y-3">
@@ -187,9 +173,8 @@ export default async function MatchesPage() {
 
         {/* Confirmed Matches */}
         {confirmedMatches.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
               Confirmed ({confirmedMatches.length})
             </h2>
             <div className="space-y-3">
@@ -202,9 +187,8 @@ export default async function MatchesPage() {
 
         {/* Past Matches */}
         {pastMatches.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
               Past ({pastMatches.length})
             </h2>
             <div className="space-y-3">
@@ -217,27 +201,19 @@ export default async function MatchesPage() {
 
         {/* Empty State */}
         {(!matches || matches.length === 0) && (
-          <div className="text-center py-16">
-            <svg
-              className="w-16 h-16 mx-auto mb-4 text-slate-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No matches yet</h3>
-            <p className="text-slate-600 mb-4">
-              We&apos;re working on finding your perfect matches. Check back soon!
+          <div className="text-center py-16 bg-white rounded-xl border border-[#e3e2de]">
+            <div className="w-16 h-16 mx-auto mb-4 bg-[#f7f6f3] rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#37352f]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[#37352f] mb-2">No matches yet</h3>
+            <p className="text-[#37352f]/60 mb-6 max-w-sm mx-auto">
+              We're working on finding your perfect matches. Check back soon!
             </p>
             <Link
               href="/profile"
-              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
               Update your profile
             </Link>

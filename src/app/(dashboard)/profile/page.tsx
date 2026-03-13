@@ -56,7 +56,6 @@ export default function ProfilePage() {
       return;
     }
 
-    // Fetch user with memory profile and agent profiles
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id, name, email, avatar_url')
@@ -69,14 +68,12 @@ export default function ProfilePage() {
       return;
     }
 
-    // Fetch memory profile
     const { data: memoryProfile } = await supabase
       .from('memory_profiles')
       .select('*')
       .eq('user_id', user.id)
       .single();
 
-    // Fetch agent profiles
     const { data: agentProfiles } = await supabase
       .from('agent_profiles')
       .select('id, intent, summary, talking_points')
@@ -145,18 +142,27 @@ export default function ProfilePage() {
     return labels[intent];
   };
 
+  const getIntentColor = (intent: RelationshipIntent) => {
+    const colors: Record<RelationshipIntent, { bg: string; text: string }> = {
+      professional: { bg: 'bg-[#0077cc]/10', text: 'text-[#0077cc]' },
+      dating: { bg: 'bg-[#eb5757]/10', text: 'text-[#eb5757]' },
+      friendship: { bg: 'bg-[#0f7b6c]/10', text: 'text-[#0f7b6c]' },
+    };
+    return colors[intent];
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#0077cc] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <p className="text-white/60">Profile not found</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[#37352f]/60">Profile not found</p>
       </div>
     );
   }
@@ -164,322 +170,260 @@ export default function ProfilePage() {
   const mp = profile.memory_profile;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[100px]" />
-      </div>
-
+    <div className="min-h-screen bg-white text-[#37352f]">
       {/* Header */}
-      <header className="relative z-10 border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 py-5 flex justify-between items-center">
-          <Link href="/dashboard" className="group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/25">
-              <span className="text-white font-bold text-lg">N</span>
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#e3e2de]">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="text-xl font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
-              Nomi
-            </span>
+            <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
           </Link>
 
           <nav className="flex items-center gap-1">
-            <Link href="/dashboard" className="px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all">
+            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Dashboard
             </Link>
-            <Link href="/matches" className="px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all">
+            <Link href="/matches" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Matches
             </Link>
-            <Link href="/profile" className="px-4 py-2 text-sm text-white bg-white/[0.05] rounded-lg">
-              Profile
-            </Link>
+            <div className="w-px h-5 bg-[#e3e2de] mx-2" />
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 text-sm font-medium text-[#37352f]/40 hover:text-[#eb5757] hover:bg-[#eb5757]/5 rounded-md transition-colors"
+            >
+              Sign out
+            </button>
           </nav>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-10">
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+          <div className="mb-6 p-4 bg-[#eb5757]/10 border border-[#eb5757]/20 rounded-lg text-[#eb5757]">
             {error}
-            <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
           </div>
         )}
 
-        {/* Hero Section */}
-        <div className="mb-12">
-          <div className="flex items-center gap-6 mb-6">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-2xl object-cover ring-2 ring-white/10" />
-            ) : (
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center ring-2 ring-white/10">
-                <span className="text-3xl text-white/60 font-medium">
-                  {mp?.display_name?.[0] || profile.name?.[0] || '?'}
-                </span>
-              </div>
-            )}
-            <div>
-              <h1 className="text-3xl font-serif font-light text-white mb-1">
-                {mp?.display_name || profile.name || 'Anonymous'}
-              </h1>
-              {mp?.headline && (
-                <p className="text-white/50">{mp.headline}</p>
-              )}
-              {mp?.location && (
-                <p className="text-white/30 text-sm mt-1">📍 {mp.location}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
         {!mp ? (
-          /* No Profile - CTA to create */
-          <div className="relative p-8 rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 backdrop-blur-xl" />
-            <div className="absolute inset-0 border border-white/10 rounded-2xl" />
-            <div className="relative text-center">
-              <h2 className="text-2xl font-serif text-white mb-3">Create Your Digital Manual</h2>
-              <p className="text-white/50 mb-6 max-w-md mx-auto">
-                Chat with AI to build your personal context. It only takes a few minutes.
-              </p>
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#0a0a0f] rounded-xl font-medium hover:bg-white/90 transition-colors"
-              >
-                Get Started
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#f7f6f3] rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#37352f]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
             </div>
+            <h2 className="text-xl font-semibold text-[#37352f] mb-2">No profile yet</h2>
+            <p className="text-[#37352f]/60 mb-6">Create your profile to get started</p>
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
+            >
+              Create Profile
+            </Link>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left Column - Actions */}
-            <div className="space-y-4">
-              {/* Action Buttons */}
-              <div className="relative rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
-                <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
-                <div className="relative p-6 space-y-4">
-                  <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">Actions</h3>
-
-                  {/* Update via Chat */}
-                  <Link
-                    href="/profile/chat"
-                    className="flex items-center gap-3 w-full p-4 rounded-xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/20 hover:border-violet-500/40 transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium">Update Profile</p>
-                      <p className="text-white/40 text-sm">Chat with AI to update</p>
-                    </div>
-                    <svg className="w-5 h-5 text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-
-                  {/* Export */}
-                  <button
-                    onClick={handleExport}
-                    disabled={exporting}
-                    className="flex items-center gap-3 w-full p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-white font-medium">Export .md</p>
-                      <p className="text-white/40 text-sm">Download your manual</p>
-                    </div>
-                    {exporting && (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    )}
-                  </button>
-
-                  {/* Matching Toggle */}
-                  <div className="flex items-center gap-3 w-full p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${matchingEnabled ? 'bg-blue-500/20' : 'bg-white/[0.05]'}`}>
-                      <svg className={`w-5 h-5 ${matchingEnabled ? 'text-blue-400' : 'text-white/40'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium">Matching</p>
-                      <p className="text-white/40 text-sm">{matchingEnabled ? 'Visible to others' : 'Hidden from matching'}</p>
-                    </div>
-                    <button
-                      onClick={handleToggleMatching}
-                      disabled={togglingMatching}
-                      className={`relative w-12 h-7 rounded-full transition-colors ${matchingEnabled ? 'bg-blue-500' : 'bg-white/20'}`}
-                    >
-                      <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${matchingEnabled ? 'left-6' : 'left-1'}`} />
-                    </button>
+          <div className="space-y-8">
+            {/* Profile Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-[#f7f6f3] flex items-center justify-center">
+                    <span className="text-2xl font-medium text-[#37352f]/50">
+                      {mp.display_name?.[0] || '?'}
+                    </span>
                   </div>
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold text-[#37352f]">{mp.display_name}</h1>
+                  {mp.headline && <p className="text-[#37352f]/60">{mp.headline}</p>}
+                  {mp.location && (
+                    <p className="text-sm text-[#37352f]/40 flex items-center gap-1 mt-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {mp.location}
+                    </p>
+                  )}
                 </div>
               </div>
+            </div>
 
-              {/* Sign Out */}
-              <button
-                onClick={handleSignOut}
-                className="w-full p-4 text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-white/[0.06] transition-all"
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/profile/chat"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
               >
-                Sign out
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Update with AI
+              </Link>
+              <button
+                onClick={handleExport}
+                disabled={exporting}
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-[#e3e2de] hover:bg-[#f7f6f3] text-[#37352f] font-medium rounded-md transition-colors disabled:opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {exporting ? 'Exporting...' : 'Export .md'}
+              </button>
+              <button
+                onClick={handleToggleMatching}
+                disabled={togglingMatching}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 border rounded-md font-medium transition-colors disabled:opacity-50 ${
+                  matchingEnabled
+                    ? 'border-[#0f7b6c] bg-[#0f7b6c]/5 text-[#0f7b6c]'
+                    : 'border-[#e3e2de] text-[#37352f]/60 hover:bg-[#f7f6f3]'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${matchingEnabled ? 'bg-[#0f7b6c]' : 'bg-[#37352f]/30'}`} />
+                {togglingMatching ? 'Updating...' : matchingEnabled ? 'Matching On' : 'Matching Off'}
               </button>
             </div>
 
-            {/* Right Column - Memory */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Your Memory */}
-              <div className="relative rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
-                <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
-                <div className="relative p-6">
-                  <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Your Memory</h3>
-
-                  <div className="space-y-6">
-                    {/* Goals */}
-                    {mp.current_goals && mp.current_goals.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">Current Goals</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.current_goals.map((goal, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-violet-500/10 text-violet-300 rounded-lg text-sm border border-violet-500/20">
-                              {goal}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Skills */}
-                    {mp.skills && mp.skills.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">Skills</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.skills.map((skill, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-blue-500/10 text-blue-300 rounded-lg text-sm border border-blue-500/20">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Can Offer */}
-                    {mp.can_offer && mp.can_offer.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">What I Can Offer</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.can_offer.map((item, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-300 rounded-lg text-sm border border-emerald-500/20">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Looking For */}
-                    {mp.looking_for && mp.looking_for.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">What I&apos;m Looking For</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.looking_for.map((item, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-amber-500/10 text-amber-300 rounded-lg text-sm border border-amber-500/20">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Interests */}
-                    {mp.interests && mp.interests.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">Interests</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.interests.map((interest, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-pink-500/10 text-pink-300 rounded-lg text-sm border border-pink-500/20">
-                              {interest}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Values */}
-                    {mp.values && mp.values.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">Values</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.values.map((value, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-white/[0.05] text-white/70 rounded-lg text-sm border border-white/10">
-                              {value}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Intents */}
-                    {mp.intents && mp.intents.length > 0 && (
-                      <div>
-                        <p className="text-white/50 text-sm mb-2">Open to Connect</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mp.intents.map((intent, i) => (
-                            <span key={i} className="px-3 py-1.5 bg-fuchsia-500/10 text-fuchsia-300 rounded-lg text-sm border border-fuchsia-500/20">
-                              {getIntentLabel(intent)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Agents */}
-              {matchingEnabled && profile.agent_profiles && profile.agent_profiles.length > 0 && (
-                <div className="relative rounded-2xl overflow-hidden">
-                  <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
-                  <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
-                  <div className="relative p-6">
-                    <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Your AI Agents</h3>
-                    <div className="space-y-4">
-                      {profile.agent_profiles.map((agent) => (
-                        <div key={agent.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              agent.intent === 'professional' ? 'bg-blue-500/20 text-blue-300' :
-                              agent.intent === 'dating' ? 'bg-pink-500/20 text-pink-300' :
-                              'bg-emerald-500/20 text-emerald-300'
-                            }`}>
-                              {getIntentLabel(agent.intent)}
-                            </span>
-                          </div>
-                          <p className="text-white/70 text-sm mb-3">{agent.summary}</p>
-                          {agent.talking_points && agent.talking_points.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {agent.talking_points.slice(0, 3).map((point, i) => (
-                                <span key={i} className="px-2 py-1 bg-white/[0.05] text-white/50 rounded text-xs">
-                                  {point.length > 40 ? point.slice(0, 40) + '...' : point}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+            {/* Memory Sections */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Skills */}
+              {mp.skills && mp.skills.length > 0 && (
+                <div className="p-5 bg-[#f7f6f3] rounded-xl">
+                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {mp.skills.map((skill, i) => (
+                      <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#e3e2de]">
+                        {skill}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
+
+              {/* Interests */}
+              {mp.interests && mp.interests.length > 0 && (
+                <div className="p-5 bg-[#f7f6f3] rounded-xl">
+                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Interests</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {mp.interests.map((interest, i) => (
+                      <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#e3e2de]">
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Goals */}
+              {mp.current_goals && mp.current_goals.length > 0 && (
+                <div className="p-5 bg-[#0077cc]/5 rounded-xl border border-[#0077cc]/10">
+                  <h3 className="text-sm font-semibold text-[#0077cc] uppercase tracking-wide mb-3">Current Goals</h3>
+                  <ul className="space-y-2">
+                    {mp.current_goals.map((goal, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[#37352f]">
+                        <span className="text-[#0077cc] mt-1">→</span>
+                        {goal}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Values */}
+              {mp.values && mp.values.length > 0 && (
+                <div className="p-5 bg-[#9065b0]/5 rounded-xl border border-[#9065b0]/10">
+                  <h3 className="text-sm font-semibold text-[#9065b0] uppercase tracking-wide mb-3">Values</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {mp.values.map((value, i) => (
+                      <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#9065b0]/20">
+                        {value}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Can Offer */}
+              {mp.can_offer && mp.can_offer.length > 0 && (
+                <div className="p-5 bg-[#0f7b6c]/5 rounded-xl border border-[#0f7b6c]/10">
+                  <h3 className="text-sm font-semibold text-[#0f7b6c] uppercase tracking-wide mb-3">What I Can Offer</h3>
+                  <ul className="space-y-2">
+                    {mp.can_offer.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[#37352f]">
+                        <svg className="w-4 h-4 text-[#0f7b6c] mt-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Looking For */}
+              {mp.looking_for && mp.looking_for.length > 0 && (
+                <div className="p-5 bg-[#f7c94b]/5 rounded-xl border border-[#f7c94b]/20">
+                  <h3 className="text-sm font-semibold text-[#b8860b] uppercase tracking-wide mb-3">Looking For</h3>
+                  <ul className="space-y-2">
+                    {mp.looking_for.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[#37352f]">
+                        <span className="text-[#b8860b] mt-1">◦</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
+
+            {/* Relationship Types */}
+            {mp.intents && mp.intents.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Open to Connect</h3>
+                <div className="flex flex-wrap gap-2">
+                  {mp.intents.map((intent) => {
+                    const color = getIntentColor(intent);
+                    return (
+                      <span key={intent} className={`px-4 py-2 rounded-md text-sm font-medium ${color.bg} ${color.text}`}>
+                        {getIntentLabel(intent)}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* AI Agents */}
+            {profile.agent_profiles && profile.agent_profiles.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">Your AI Agents</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {profile.agent_profiles.map((agent) => {
+                    const color = getIntentColor(agent.intent);
+                    return (
+                      <div key={agent.id} className={`p-5 rounded-xl border border-[#e3e2de] ${color.bg}`}>
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mb-3 bg-white ${color.text}`}>
+                          {getIntentLabel(agent.intent)}
+                        </span>
+                        <p className="text-sm text-[#37352f]/70 mb-3">{agent.summary}</p>
+                        {agent.talking_points && agent.talking_points.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {agent.talking_points.slice(0, 3).map((point, i) => (
+                              <span key={i} className="px-2 py-1 bg-white/80 text-[#37352f]/60 rounded text-xs">
+                                {point.length > 30 ? point.slice(0, 30) + '...' : point}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

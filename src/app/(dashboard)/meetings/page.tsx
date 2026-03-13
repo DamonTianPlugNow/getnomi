@@ -13,7 +13,6 @@ export default async function MeetingsPage() {
     redirect('/login');
   }
 
-  // Fetch all meetings
   const { data: meetings } = await supabase
     .from('meetings')
     .select(`
@@ -25,7 +24,6 @@ export default async function MeetingsPage() {
     .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
     .order('scheduled_at', { ascending: true });
 
-  // Check if user has given feedback for each meeting
   const { data: feedbacks } = await supabase
     .from('feedback')
     .select('meeting_id')
@@ -33,7 +31,6 @@ export default async function MeetingsPage() {
 
   const feedbackMeetingIds = new Set(feedbacks?.map((f) => f.meeting_id) || []);
 
-  // Group meetings
   const now = new Date();
   const upcomingMeetings = meetings?.filter(
     (m) => m.status === 'scheduled' && new Date(m.scheduled_at) > now
@@ -44,18 +41,18 @@ export default async function MeetingsPage() {
 
   const getStatusBadge = (meeting: typeof meetings extends (infer T)[] | null ? T : never) => {
     if (meeting.status === 'completed') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Completed</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">Completed</span>;
     }
     if (meeting.status === 'no_show') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">No Show</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#eb5757]/10 text-[#eb5757]">No Show</span>;
     }
     if (meeting.status === 'cancelled') {
-      return <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-500">Cancelled</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Cancelled</span>;
     }
     if (new Date(meeting.scheduled_at) <= now) {
-      return <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700">Awaiting Feedback</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">Needs feedback</span>;
     }
-    return <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">Upcoming</span>;
+    return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">Upcoming</span>;
   };
 
   const formatMeetingTime = (dateStr: string) => {
@@ -78,80 +75,72 @@ export default async function MeetingsPage() {
     });
   };
 
-  const getTimeUntil = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const diffMs = date.getTime() - now.getTime();
-    const diffMins = Math.round(diffMs / (1000 * 60));
-    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) return `in ${diffMins} minutes`;
-    if (diffHours < 24) return `in ${diffHours} hours`;
-    return `in ${diffDays} days`;
+  const getIntentBadge = (intent: string) => {
+    const config: Record<string, { emoji: string; bg: string; text: string }> = {
+      professional: { emoji: '💼', bg: 'bg-[#0077cc]/10', text: 'text-[#0077cc]' },
+      dating: { emoji: '💕', bg: 'bg-[#eb5757]/10', text: 'text-[#eb5757]' },
+      friendship: { emoji: '🤝', bg: 'bg-[#0f7b6c]/10', text: 'text-[#0f7b6c]' },
+    };
+    const c = config[intent] || config.friendship;
+    return (
+      <span className={`px-2 py-0.5 text-xs font-medium rounded ${c.bg} ${c.text}`}>
+        {c.emoji} {intent}
+      </span>
+    );
   };
 
-  const MeetingCard = ({
-    meeting,
-    isPast = false,
-  }: {
+  const MeetingCard = ({ meeting, showFeedback = false }: {
     meeting: typeof meetings extends (infer T)[] | null ? T : never;
-    isPast?: boolean;
+    showFeedback?: boolean;
   }) => {
     const isUserA = meeting.user_a_id === user.id;
     const otherUser = isUserA ? meeting.user_b : meeting.user_a;
-    const hasFeedback = feedbackMeetingIds.has(meeting.id);
-    const needsFeedback = isPast && !hasFeedback && meeting.status !== 'cancelled';
+    const needsFeedback = showFeedback && !feedbackMeetingIds.has(meeting.id) && new Date(meeting.scheduled_at) <= now;
 
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="p-5 bg-white rounded-xl border border-[#e3e2de] hover:border-[#0077cc]/30 hover:shadow-sm transition-all">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+          <div className="flex-shrink-0">
             {otherUser?.avatar_url ? (
               <img
                 src={otherUser.avatar_url}
-                alt={otherUser.name || ''}
-                className="w-14 h-14 rounded-full object-cover"
+                alt=""
+                className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
-              <span className="text-xl font-medium text-slate-500">
-                {otherUser?.name?.[0] || '?'}
-              </span>
+              <div className="w-12 h-12 rounded-full bg-[#f7f6f3] flex items-center justify-center">
+                <span className="text-[#37352f]/60 font-medium text-lg">
+                  {otherUser?.name?.[0] || '?'}
+                </span>
+              </div>
             )}
           </div>
-
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-slate-900 truncate">
-                {otherUser?.name || 'Unknown'}
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-[#37352f]">
+                {otherUser?.name || 'Anonymous'}
               </h3>
               {getStatusBadge(meeting)}
             </div>
-
-            <p className="text-sm text-slate-600 mb-2">
+            <p className="text-sm text-[#37352f]/60 mb-2">
               {formatMeetingTime(meeting.scheduled_at)}
-              {!isPast && (
-                <span className="text-slate-400"> · {getTimeUntil(meeting.scheduled_at)}</span>
-              )}
             </p>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600">
-                {meeting.platform === 'zoom' ? '📹 Zoom' :
-                 meeting.platform === 'feishu' ? '📹 Feishu' :
-                 meeting.platform === 'google_meet' ? '📹 Google Meet' :
-                 meeting.platform}
-              </span>
-              <span className="text-xs text-slate-400">{meeting.duration_minutes} min</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {meeting.match?.intent && getIntentBadge(meeting.match.intent)}
+              {meeting.platform && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-[#37352f]/5 text-[#37352f]/60">
+                  📹 {meeting.platform}
+                </span>
+              )}
             </div>
           </div>
-
           <div className="flex flex-col gap-2">
-            {!isPast && (
+            {meeting.meeting_url && new Date(meeting.scheduled_at) > now && (
               <a
                 href={meeting.meeting_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition text-center"
+                className="px-4 py-2 bg-[#0077cc] hover:bg-[#0066b3] text-white text-sm font-medium rounded-md transition-colors"
               >
                 Join
               </a>
@@ -159,84 +148,53 @@ export default async function MeetingsPage() {
             {needsFeedback && (
               <Link
                 href={`/meetings/${meeting.id}/feedback`}
-                className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition text-center"
+                className="px-4 py-2 bg-[#f7c94b] hover:bg-[#e5b93e] text-[#37352f] text-sm font-medium rounded-md transition-colors"
               >
-                Give Feedback
+                Give feedback
               </Link>
-            )}
-            {isPast && hasFeedback && (
-              <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm text-center">
-                ✓ Feedback given
-              </span>
             )}
           </div>
         </div>
-
-        {/* Meeting Brief Preview */}
-        {meeting.brief && !isPast && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Meeting Brief</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-slate-500 mb-1">Common Topics</p>
-                <div className="flex flex-wrap gap-1">
-                  {meeting.brief.common_topics?.slice(0, 3).map((topic: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-slate-500 mb-1">Ice Breaker</p>
-                <p className="text-slate-700 text-xs italic">
-                  &ldquo;{meeting.brief.ice_breakers?.[0]}&rdquo;
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f7f6f3] text-[#37352f]">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold text-slate-900">
-            Nomi
+      <header className="sticky top-0 z-50 bg-white border-b border-[#e3e2de]">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
+            </div>
+            <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
           </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/matches" className="text-slate-600 hover:text-slate-900 transition">
+
+          <nav className="flex items-center gap-1">
+            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/matches" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Matches
             </Link>
-            <Link href="/meetings" className="text-blue-600 font-medium">
-              Meetings
-            </Link>
-            <Link href="/profile" className="text-slate-600 hover:text-slate-900 transition">
+            <Link href="/profile" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
               Profile
             </Link>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Your Meetings</h1>
-            <p className="text-slate-600">
-              {meetings?.length || 0} total meetings
-            </p>
-          </div>
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#37352f] mb-2">Meetings</h1>
+          <p className="text-[#37352f]/60">Your scheduled and past meetings</p>
         </div>
 
         {/* Upcoming Meetings */}
         {upcomingMeetings.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
               Upcoming ({upcomingMeetings.length})
             </h2>
             <div className="space-y-3">
@@ -249,14 +207,13 @@ export default async function MeetingsPage() {
 
         {/* Past Meetings */}
         {pastMeetings.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
               Past ({pastMeetings.length})
             </h2>
             <div className="space-y-3">
               {pastMeetings.map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} isPast />
+                <MeetingCard key={meeting.id} meeting={meeting} showFeedback />
               ))}
             </div>
           </section>
@@ -264,27 +221,19 @@ export default async function MeetingsPage() {
 
         {/* Empty State */}
         {(!meetings || meetings.length === 0) && (
-          <div className="text-center py-16">
-            <svg
-              className="w-16 h-16 mx-auto mb-4 text-slate-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No meetings yet</h3>
-            <p className="text-slate-600 mb-4">
+          <div className="text-center py-16 bg-white rounded-xl border border-[#e3e2de]">
+            <div className="w-16 h-16 mx-auto mb-4 bg-[#f7f6f3] rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#37352f]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[#37352f] mb-2">No meetings yet</h3>
+            <p className="text-[#37352f]/60 mb-6 max-w-sm mx-auto">
               When you confirm a match, a meeting will be automatically scheduled.
             </p>
             <Link
               href="/matches"
-              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
               View your matches
             </Link>

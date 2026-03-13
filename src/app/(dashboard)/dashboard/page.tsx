@@ -54,32 +54,15 @@ export default async function DashboardPage() {
   const firstName = user.user_metadata?.name?.split(' ')[0] || 'there';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.02] to-transparent rounded-full" />
-      </div>
-
-      {/* Grain Overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.015]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
+    <div className="min-h-screen bg-white text-[#37352f]">
       {/* Header */}
-      <header className="relative z-10 border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <Link href="/dashboard" className="group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/25">
-              <span className="text-white font-bold text-lg">N</span>
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#e3e2de]">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="text-xl font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
-              Nomi
-            </span>
+            <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -91,16 +74,16 @@ export default async function DashboardPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all duration-200"
+                className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors"
               >
                 {item.label}
               </Link>
             ))}
-            <div className="w-px h-6 bg-white/10 mx-2" />
+            <div className="w-px h-5 bg-[#e3e2de] mx-2" />
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className="px-4 py-2 text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                className="px-4 py-2 text-sm font-medium text-[#37352f]/40 hover:text-[#eb5757] hover:bg-[#eb5757]/5 rounded-md transition-colors"
               >
                 Sign out
               </button>
@@ -109,57 +92,46 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-        {/* Hero Section */}
-        <div className="mb-16">
-          <p className="text-white/40 text-sm font-medium tracking-widest uppercase mb-3">
-            Welcome back
-          </p>
-          <h1 className="text-5xl md:text-6xl font-serif font-light tracking-tight text-white mb-4">
-            {firstName}
-            <span className="text-white/20">.</span>
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        {/* Welcome Section */}
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold text-[#37352f] mb-2">
+            Welcome back, {firstName}
           </h1>
-          <p className="text-lg text-white/40 max-w-xl">
+          <p className="text-[#37352f]/60">
             Your AI agents are working to find meaningful connections for you.
           </p>
         </div>
 
         {/* Status Cards */}
         {!hasProfile && (
-          <div className="relative mb-12 p-8 rounded-2xl overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 backdrop-blur-xl" />
-            <div className="absolute inset-0 border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <div className="relative">
-              <h2 className="text-2xl font-serif text-white mb-2">Complete your profile</h2>
-              <p className="text-white/50 mb-6 max-w-lg">
-                Create your memory profile to start matching with people who share your goals and values.
-              </p>
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#0a0a0f] rounded-xl font-medium hover:bg-white/90 transition-colors"
-              >
-                Get Started
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
+          <div className="mb-8 p-6 bg-[#0077cc]/5 rounded-xl border border-[#0077cc]/10">
+            <h2 className="text-xl font-semibold text-[#37352f] mb-2">Complete your profile</h2>
+            <p className="text-[#37352f]/60 mb-4">
+              Create your memory profile to start matching with people who share your goals and values.
+            </p>
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
+            >
+              Get Started
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         )}
 
         {hasProfile && !isProfileActive && (
-          <div className="relative mb-12 p-8 rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-600/10 to-orange-600/10 backdrop-blur-xl" />
-            <div className="absolute inset-0 border border-amber-500/20 rounded-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+          <div className="mb-8 p-6 bg-[#f7c94b]/10 rounded-xl border border-[#f7c94b]/20">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#f7c94b]/20 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-[#f7c94b] border-t-transparent rounded-full animate-spin" />
               </div>
               <div>
-                <h2 className="text-xl font-medium text-amber-200">Generating your AI agent...</h2>
-                <p className="text-amber-200/60 text-sm">
-                  We&apos;re creating your personalized agent profile. This usually takes a minute.
+                <h2 className="text-lg font-semibold text-[#37352f]">Generating your AI agent...</h2>
+                <p className="text-[#37352f]/60 text-sm">
+                  We're creating your personalized agent profile. This usually takes a minute.
                 </p>
               </div>
             </div>
@@ -168,203 +140,190 @@ export default async function DashboardPage() {
 
         {/* Stats Grid */}
         {hasProfile && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             {[
-              { value: profile?.agent_profiles?.length || 0, label: 'Active Agents', color: 'violet', href: '/profile' },
-              { value: matches?.length || 0, label: 'Pending Matches', color: 'blue', href: '/matches' },
-              { value: meetings?.length || 0, label: 'Upcoming Meetings', color: 'emerald', href: '/meetings' },
-              { value: profile?.intents?.length || 0, label: 'Relationship Types', color: 'fuchsia', href: '/profile' },
-            ].map((stat, i) => (
-              <Link
-                key={i}
-                href={stat.href}
-                className="group relative p-6 rounded-2xl overflow-hidden cursor-pointer"
-              >
-                <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
-                <div className="absolute inset-0 border border-white/[0.06] rounded-2xl group-hover:border-white/[0.12] transition-colors duration-300" />
-                <div className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-${stat.color}-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                <div className="relative">
-                  <p className="text-4xl md:text-5xl font-light text-white mb-1 tracking-tight">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">{stat.label}</p>
-                </div>
-              </Link>
-            ))}
+              { value: profile?.agent_profiles?.length || 0, label: 'Active Agents', color: 'blue', href: '/profile' },
+              { value: matches?.length || 0, label: 'Pending Matches', color: 'teal', href: '/matches' },
+              { value: meetings?.length || 0, label: 'Upcoming Meetings', color: 'orange', href: '/meetings' },
+              { value: profile?.intents?.length || 0, label: 'Relationship Types', color: 'purple', href: '/profile' },
+            ].map((stat, i) => {
+              const colors: Record<string, string> = {
+                blue: 'bg-[#0077cc]/5 border-[#0077cc]/10 hover:border-[#0077cc]/20',
+                teal: 'bg-[#0f7b6c]/5 border-[#0f7b6c]/10 hover:border-[#0f7b6c]/20',
+                orange: 'bg-[#eb5757]/5 border-[#eb5757]/10 hover:border-[#eb5757]/20',
+                purple: 'bg-[#9065b0]/5 border-[#9065b0]/10 hover:border-[#9065b0]/20',
+              };
+              return (
+                <Link
+                  key={i}
+                  href={stat.href}
+                  className={`p-5 rounded-xl border transition-colors ${colors[stat.color]}`}
+                >
+                  <p className="text-3xl font-bold text-[#37352f] mb-1">{stat.value}</p>
+                  <p className="text-sm text-[#37352f]/60">{stat.label}</p>
+                </Link>
+              );
+            })}
           </div>
         )}
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Recent Matches */}
-          <div className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-sm" />
-            <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
-            <div className="relative p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-medium text-white/90">Recent Matches</h2>
-                <Link
-                  href="/matches"
-                  className="text-sm text-white/40 hover:text-white transition-colors"
-                >
-                  View all →
-                </Link>
-              </div>
-
-              {!matches || matches.length === 0 ? (
-                <div className="py-16 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/[0.03] flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <p className="text-white/40 mb-1">No matches yet</p>
-                  <p className="text-sm text-white/20">We&apos;re looking for your perfect matches!</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {matches.map((match) => {
-                    const otherUser = match.user_a_id === user.id ? match.user_b : match.user_a;
-                    const otherAgent = match.user_a_id === user.id ? match.agent_b : match.agent_a;
-                    return (
-                      <Link
-                        key={match.id}
-                        href={`/matches/${match.id}`}
-                        className="group flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition-all duration-200"
-                      >
-                        <div className="relative">
-                          {otherUser?.avatar_url ? (
-                            <img
-                              src={otherUser.avatar_url}
-                              alt=""
-                              className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center ring-2 ring-white/10">
-                              <span className="text-white/60 font-medium">
-                                {otherUser?.name?.[0] || '?'}
-                              </span>
-                            </div>
-                          )}
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0a0a0f] ${
-                            match.status === 'matched' ? 'bg-emerald-500' :
-                            match.status === 'half_approved' ? 'bg-amber-500' : 'bg-white/30'
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white/90 truncate">
-                            {otherUser?.name || 'Anonymous'}
-                          </p>
-                          <p className="text-sm text-white/40 truncate">
-                            {otherAgent?.summary?.slice(0, 60) || 'No summary'}...
-                          </p>
-                        </div>
-                        <svg className="w-5 h-5 text-white/20 group-hover:text-white/40 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+          <div className="bg-[#f7f6f3] rounded-xl p-6 border border-[#e3e2de]">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-lg font-semibold text-[#37352f]">Recent Matches</h2>
+              <Link href="/matches" className="text-sm text-[#0077cc] hover:underline">
+                View all →
+              </Link>
             </div>
+
+            {!matches || matches.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#e3e2de] flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#37352f]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className="text-[#37352f]/60 mb-1">No matches yet</p>
+                <p className="text-sm text-[#37352f]/40">We're looking for your perfect matches!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {matches.map((match) => {
+                  const otherUser = match.user_a_id === user.id ? match.user_b : match.user_a;
+                  const otherAgent = match.user_a_id === user.id ? match.agent_b : match.agent_a;
+                  return (
+                    <Link
+                      key={match.id}
+                      href={`/matches/${match.id}`}
+                      className="flex items-center gap-4 p-4 bg-white rounded-lg border border-[#e3e2de] hover:border-[#0077cc]/30 transition-colors"
+                    >
+                      <div className="relative">
+                        {otherUser?.avatar_url ? (
+                          <img
+                            src={otherUser.avatar_url}
+                            alt=""
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[#e3e2de] flex items-center justify-center">
+                            <span className="text-[#37352f]/60 font-medium text-sm">
+                              {otherUser?.name?.[0] || '?'}
+                            </span>
+                          </div>
+                        )}
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                          match.status === 'matched' ? 'bg-[#0f7b6c]' :
+                          match.status === 'half_approved' ? 'bg-[#f7c94b]' : 'bg-[#e3e2de]'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#37352f] truncate">
+                          {otherUser?.name || 'Anonymous'}
+                        </p>
+                        <p className="text-sm text-[#37352f]/50 truncate">
+                          {otherAgent?.summary?.slice(0, 50) || 'No summary'}...
+                        </p>
+                      </div>
+                      <svg className="w-5 h-5 text-[#37352f]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Upcoming Meetings */}
-          <div className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-sm" />
-            <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
-            <div className="relative p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-medium text-white/90">Upcoming Meetings</h2>
-                <Link
-                  href="/meetings"
-                  className="text-sm text-white/40 hover:text-white transition-colors"
-                >
-                  View all →
-                </Link>
-              </div>
-
-              {!meetings || meetings.length === 0 ? (
-                <div className="py-16 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/[0.03] flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-white/40 mb-1">No upcoming meetings</p>
-                  <p className="text-sm text-white/20">Confirm a match to schedule a meeting</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {meetings.map((meeting) => {
-                    const otherUser = meeting.user_a_id === user.id ? meeting.user_b : meeting.user_a;
-                    const meetingDate = new Date(meeting.scheduled_at);
-                    return (
-                      <Link
-                        key={meeting.id}
-                        href={`/meetings/${meeting.id}`}
-                        className="group flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition-all duration-200"
-                      >
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex flex-col items-center justify-center border border-emerald-500/20">
-                          <span className="text-xs text-emerald-400/80 uppercase font-medium">
-                            {meetingDate.toLocaleDateString('en-US', { month: 'short' })}
-                          </span>
-                          <span className="text-xl font-light text-white">
-                            {meetingDate.getDate()}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white/90 truncate">
-                            Meeting with {otherUser?.name || 'Anonymous'}
-                          </p>
-                          <p className="text-sm text-white/40">
-                            {meetingDate.toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </p>
-                        </div>
-                        <svg className="w-5 h-5 text-white/20 group-hover:text-white/40 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+          <div className="bg-[#f7f6f3] rounded-xl p-6 border border-[#e3e2de]">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-lg font-semibold text-[#37352f]">Upcoming Meetings</h2>
+              <Link href="/meetings" className="text-sm text-[#0077cc] hover:underline">
+                View all →
+              </Link>
             </div>
+
+            {!meetings || meetings.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[#e3e2de] flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#37352f]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-[#37352f]/60 mb-1">No upcoming meetings</p>
+                <p className="text-sm text-[#37352f]/40">Confirm a match to schedule a meeting</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {meetings.map((meeting) => {
+                  const otherUser = meeting.user_a_id === user.id ? meeting.user_b : meeting.user_a;
+                  const meetingDate = new Date(meeting.scheduled_at);
+                  return (
+                    <Link
+                      key={meeting.id}
+                      href={`/meetings/${meeting.id}`}
+                      className="flex items-center gap-4 p-4 bg-white rounded-lg border border-[#e3e2de] hover:border-[#0f7b6c]/30 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-[#0f7b6c]/10 flex flex-col items-center justify-center">
+                        <span className="text-xs text-[#0f7b6c] font-medium uppercase">
+                          {meetingDate.toLocaleDateString('en-US', { month: 'short' })}
+                        </span>
+                        <span className="text-lg font-bold text-[#37352f]">
+                          {meetingDate.getDate()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#37352f] truncate">
+                          Meeting with {otherUser?.name || 'Anonymous'}
+                        </p>
+                        <p className="text-sm text-[#37352f]/50">
+                          {meetingDate.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </p>
+                      </div>
+                      <svg className="w-5 h-5 text-[#37352f]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Agent Profiles Section */}
         {hasProfile && isProfileActive && profile?.agent_profiles && profile.agent_profiles.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-lg font-medium text-white/90 mb-6">Your AI Agents</h2>
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-[#37352f] mb-5">Your AI Agents</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              {profile.agent_profiles.map((agent: { id: string; intent: string; summary: string }) => (
-                <div
-                  key={agent.id}
-                  className="group relative p-6 rounded-2xl overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-white/[0.01] backdrop-blur-sm" />
-                  <div className="absolute inset-0 border border-white/[0.06] rounded-2xl group-hover:border-white/[0.12] transition-colors duration-300" />
-                  <div className="relative">
-                    <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mb-4 ${
-                      agent.intent === 'professional' ? 'bg-blue-500/20 text-blue-300' :
-                      agent.intent === 'dating' ? 'bg-pink-500/20 text-pink-300' :
-                      'bg-emerald-500/20 text-emerald-300'
-                    }`}>
+              {profile.agent_profiles.map((agent: { id: string; intent: string; summary: string }) => {
+                const colors: Record<string, { bg: string; text: string; badge: string }> = {
+                  professional: { bg: 'bg-[#0077cc]/5', text: 'text-[#0077cc]', badge: 'bg-[#0077cc]/10' },
+                  dating: { bg: 'bg-[#eb5757]/5', text: 'text-[#eb5757]', badge: 'bg-[#eb5757]/10' },
+                  friendship: { bg: 'bg-[#0f7b6c]/5', text: 'text-[#0f7b6c]', badge: 'bg-[#0f7b6c]/10' },
+                };
+                const color = colors[agent.intent] || colors.friendship;
+                return (
+                  <div
+                    key={agent.id}
+                    className={`p-5 rounded-xl border border-[#e3e2de] ${color.bg}`}
+                  >
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mb-3 ${color.badge} ${color.text}`}>
                       {agent.intent === 'professional' ? '💼 Professional' :
                        agent.intent === 'dating' ? '💕 Dating' : '🤝 Friendship'}
-                    </div>
-                    <p className="text-sm text-white/60 line-clamp-3">
+                    </span>
+                    <p className="text-sm text-[#37352f]/70 line-clamp-3">
                       {agent.summary}
                     </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
