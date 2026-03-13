@@ -23,6 +23,18 @@
 - **Why**: 帮助用户维护关系网络
 - **Effort**: S
 
+### P2-5: Onboarding Streaming Response
+- **What**: AI 对话回复改为流式输出，用户可以看到逐字显示
+- **Why**: 提升用户体验，减少等待感
+- **Effort**: M
+- **Context**: 当前 handleOnboardingChat 返回完整响应，需要改为 SSE 流式返回
+
+### P2-6: Onboarding 对话数据库持久化
+- **What**: 将 onboarding 对话历史存储到数据库，支持跨设备同步
+- **Why**: 当前使用 localStorage，换设备会丢失对话进度
+- **Effort**: M
+- **Context**: 需要新建 onboarding_sessions 表，存储 user_id, messages, profile_data, status
+
 ## Phase 3 (Future)
 
 ### P3-1: Agent 自主沟通

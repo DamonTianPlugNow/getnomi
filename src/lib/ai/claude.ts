@@ -1,4 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
+import type {
+  RelationshipIntent,
+  WorkExperience,
+  ChatMessage,
+  OnboardingProfileData,
+  OnboardingChatResult
+} from '@/types';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -9,6 +16,40 @@ export { anthropic };
 
 // Default timeout for LLM calls (30 seconds)
 export const LLM_TIMEOUT_MS = 30000;
+
+// Retry configuration
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
+
+/**
+ * Structured logger for onboarding
+ */
+function logOnboarding(
+  level: 'info' | 'warn' | 'error',
+  action: string,
+  data: Record<string, unknown>
+) {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    service: 'onboarding',
+    action,
+    ...data,
+  };
+  if (level === 'error') {
+    console.error(JSON.stringify(logData));
+  } else if (level === 'warn') {
+    console.warn(JSON.stringify(logData));
+  } else {
+    console.log(JSON.stringify(logData));
+  }
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Extract JSON from text, handling markdown code blocks
@@ -373,4 +414,216 @@ Generate a meeting brief. Respond with JSON only.`;
       ice_breakers: ['What are you currently working on?'],
     };
   }
+}
+
+// ============================================
+// Onboarding Chat
+// ============================================
+
+const ONBOARDING_SYSTEM_PROMPT = `你是 A2A 平台的 onboarding 助手。你的目标是通过自然、友好的对话收集用户信息，帮助他们创建个人档案。
+
+## 需要收集的信息
+1. display_name - 用户的名字（必填）
+2. headline - 职业/头衔，如"阿里产品经理"或"创业者"
+3. location - 所���城市
+4. work_experience - 工作经历（公司、职位、描述）
+5. skills - 技能列表（3-5个）
+6. can_offer - 能提供什么（如技术建议、人脉介绍、创业指导）
+7. looking_for - 想找什么（如合伙人、投资人、技术人才、朋友）
+8. current_goals - 当前目标
+9. interests - 兴趣爱好
+10. values - 重要的价值观
+11. intents - 关系类型：professional（职业）、dating（约会）、friendship（友谊）
+
+## 对话原则
+- 用中文交流，语气友好自然
+- 根据用户回答智能提取信息，不要机械地逐个询问
+- 如果用户一次性提供多个信息，全部提取
+- 适当追问以获取更完整的信息
+- 当收集到足够信息（至少有 display_name 和 intents）时标记完成
+- 每次回复简洁，不要太长
+
+## 输出格式
+每次回复必须是有效的 JSON，格式如下：
+{
+  "reply": "你的回复内容",
+  "extracted": {
+    // 从本轮对话中新提取的数据，只包含有新值的字段
+    // 例如: "display_name": "张三", "headline": "产品经理"
+  },
+  "isComplete": false  // 当收集完必要信息时设为 true
+}
+
+## 完成条件
+当以下条件满足时，设置 isComplete: true：
+- display_name 已收集
+- intents 已收集
+- 至少收集了 3 个其他字段
+
+在最后一条消息中，友好地告诉用户档案已创建完成。`;
+
+/**
+ * Handle onboarding chat with Claude
+ * Extracts structured profile data from natural conversation
+ * Includes retry logic for resilience
+ */
+export async function handleOnboardingChat(
+  messages: ChatMessage[],
+  currentProfileData: Partial<OnboardingProfileData>,
+  sessionId?: string
+): Promise<OnboardingChatResult> {
+  const startTime = Date.now();
+  const logContext = { sessionId, messageCount: messages.length };
+
+  logOnboarding('info', 'chat_start', logContext);
+
+  // Build conversation history for Claude
+  const conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      conversationHistory.push({
+        role: 'user',
+        content: `<user_input>${msg.content}</user_input>`,
+      });
+    } else {
+      conversationHistory.push({
+        role: 'assistant',
+        content: msg.content,
+      });
+    }
+  }
+
+  // Add context about already collected data
+  const collectedFields = Object.entries(currentProfileData)
+    .filter(([, v]) => v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true))
+    .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
+    .join('\n');
+
+  const contextMessage = collectedFields
+    ? `\n\n[已收集的信息]\n${collectedFields}`
+    : '\n\n[尚未收集任何信息]';
+
+  // Retry loop
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        logOnboarding('warn', 'chat_retry', { ...logContext, attempt });
+        await sleep(RETRY_DELAY_MS * attempt);
+      }
+
+      const response = await withTimeout(
+        anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: ONBOARDING_SYSTEM_PROMPT + contextMessage,
+          messages: conversationHistory,
+        }),
+        LLM_TIMEOUT_MS,
+        'Onboarding chat'
+      );
+
+      const content = response.content[0];
+      if (content.type !== 'text') {
+        throw new Error('Unexpected response type from Claude');
+      }
+
+      const parsed = extractJSON(content.text) as OnboardingChatResult;
+
+      // Validate and normalize extracted data
+      const extracted: Partial<OnboardingProfileData> = {};
+
+      if (parsed.extracted) {
+        if (typeof parsed.extracted.display_name === 'string') {
+          extracted.display_name = parsed.extracted.display_name;
+        }
+        if (typeof parsed.extracted.headline === 'string') {
+          extracted.headline = parsed.extracted.headline;
+        }
+        if (typeof parsed.extracted.location === 'string') {
+          extracted.location = parsed.extracted.location;
+        }
+        if (Array.isArray(parsed.extracted.work_experience)) {
+          extracted.work_experience = parsed.extracted.work_experience;
+        }
+        if (Array.isArray(parsed.extracted.skills)) {
+          extracted.skills = parsed.extracted.skills;
+        }
+        if (Array.isArray(parsed.extracted.can_offer)) {
+          extracted.can_offer = parsed.extracted.can_offer;
+        }
+        if (Array.isArray(parsed.extracted.looking_for)) {
+          extracted.looking_for = parsed.extracted.looking_for;
+        }
+        if (Array.isArray(parsed.extracted.current_goals)) {
+          extracted.current_goals = parsed.extracted.current_goals;
+        }
+        if (Array.isArray(parsed.extracted.interests)) {
+          extracted.interests = parsed.extracted.interests;
+        }
+        if (Array.isArray(parsed.extracted.values)) {
+          extracted.values = parsed.extracted.values;
+        }
+        if (Array.isArray(parsed.extracted.intents)) {
+          extracted.intents = parsed.extracted.intents.filter(
+            (i): i is RelationshipIntent => ['professional', 'dating', 'friendship'].includes(i)
+          );
+        }
+      }
+
+      const latencyMs = Date.now() - startTime;
+      logOnboarding('info', 'chat_success', {
+        ...logContext,
+        latencyMs,
+        extractedFields: Object.keys(extracted),
+        isComplete: parsed.isComplete,
+      });
+
+      return {
+        reply: parsed.reply || '抱歉，我没有理解。能再说一遍吗？',
+        extracted,
+        isComplete: Boolean(parsed.isComplete),
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      // Don't retry on parse errors (they won't succeed on retry)
+      if (lastError.message.includes('Could not extract valid JSON')) {
+        logOnboarding('warn', 'chat_parse_error', {
+          ...logContext,
+          error: lastError.message,
+        });
+        break;
+      }
+
+      logOnboarding('error', 'chat_error', {
+        ...logContext,
+        attempt,
+        error: lastError.message,
+      });
+    }
+  }
+
+  // All retries failed
+  const latencyMs = Date.now() - startTime;
+  logOnboarding('error', 'chat_failed', {
+    ...logContext,
+    latencyMs,
+    error: lastError?.message,
+  });
+
+  // Return user-friendly error based on error type
+  let userMessage = '抱歉，出了点问题。请稍后再试。';
+  if (lastError?.message.includes('timed out')) {
+    userMessage = '响应超时了，请再试一次。';
+  } else if (lastError?.message.includes('rate limit') || lastError?.message.includes('429')) {
+    userMessage = '服务繁忙，请稍后再试。';
+  }
+
+  return {
+    reply: userMessage,
+    extracted: {},
+    isComplete: false,
+  };
 }

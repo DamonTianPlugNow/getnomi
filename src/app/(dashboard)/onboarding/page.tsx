@@ -1,55 +1,125 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { RelationshipIntent, WorkExperience } from '@/types';
+import { createClient } from '@/lib/supabase/client';
+import ReactMarkdown from 'react-markdown';
+import type { RelationshipIntent, WorkExperience, ChatMessage, OnboardingProfileData } from '@/types';
 
-interface Message {
-  role: 'assistant' | 'user';
-  content: string;
-}
+// localStorage key for persistence (Issue 1)
+const STORAGE_KEY = 'a2a_onboarding_state';
 
-interface ProfileData {
-  display_name: string;
-  headline: string;
-  location: string;
-  work_experience: WorkExperience[];
-  skills: string[];
-  can_offer: string[];
-  looking_for: string[];
-  current_goals: string[];
-  interests: string[];
-  values: string[];
-  intents: RelationshipIntent[];
-}
+// Profile fields for progress display
+const PROFILE_FIELDS = [
+  { key: 'display_name', label: '姓名' },
+  { key: 'headline', label: '职业' },
+  { key: 'location', label: '城市' },
+  { key: 'work_experience', label: '工作经历' },
+  { key: 'skills', label: '技能' },
+  { key: 'can_offer', label: '能提供' },
+  { key: 'looking_for', label: '想找' },
+  { key: 'current_goals', label: '目标' },
+  { key: 'interests', label: '兴趣' },
+  { key: 'values', label: '价值观' },
+  { key: 'intents', label: '关系类型' },
+] as const;
 
-const INITIAL_MESSAGE = `Hi! I'm here to help you create your A2A profile. This will help me understand who you are and find the best matches for you.
-
-Let's start with the basics. **What's your name?**`;
-
-const QUESTIONS = [
-  { key: 'display_name', question: "Great to meet you, {name}! What's your current role or headline? (e.g., 'AI Engineer at Startup X' or 'Founder building the future of education')" },
-  { key: 'location', question: "Where are you based? (City, Country)" },
-  { key: 'work_experience', question: "Tell me about your work experience. What are 1-2 key roles you've had? (You can describe them briefly)" },
-  { key: 'skills', question: "What are your top skills? List 3-5 things you're really good at." },
-  { key: 'can_offer', question: "What can you offer to others? (e.g., technical advice, introductions, mentorship, design feedback)" },
-  { key: 'looking_for', question: "What are you looking for from connections? (e.g., co-founder, investors, technical talent, friends with similar interests)" },
-  { key: 'current_goals', question: "What are your current goals? What are you working towards right now?" },
-  { key: 'interests', question: "What are your interests outside of work? Hobbies, passions, things you love talking about?" },
-  { key: 'values', question: "What values are important to you? (e.g., authenticity, growth mindset, work-life balance, impact)" },
-  { key: 'intents', question: "Last question! What type of relationships are you looking for? You can choose multiple:\n\n💼 **Professional** - Co-founders, mentors, collaborators\n💕 **Dating** - Romantic connections\n🤝 **Friendship** - Like-minded friends\n\nJust type the ones you want (e.g., 'Professional and Friendship')" },
+// Suggestion bubbles (Delight #5)
+const SUGGESTIONS = [
+  '我想找合伙人',
+  '我想交朋友',
+  '我是做产品的',
+  '我在北京',
 ];
+
+interface UserInfo {
+  name?: string;
+  avatar_url?: string;
+  email?: string;
+}
+
+interface StoredState {
+  messages: ChatMessage[];
+  profileData: Partial<OnboardingProfileData>;
+}
+
+function getInitialMessage(userInfo: UserInfo | null): string {
+  if (userInfo?.name) {
+    return `你好 ${userInfo.name}！我是 A2A 的 onboarding 助手 👋
+
+我看到你已经通过社交账号登录了，接下来我会通过简单的对话帮你完善个人档案，这样我们就能为你找到最合适的人脉匹配。
+
+先告诉我，**你现在做什么工作？在哪个城市？**`;
+  }
+  return `你好！我是 A2A 的 onboarding 助手，很高兴认识你 👋
+
+我会通过简单的对话帮你创建个人档案，这样我们就能为你找到最合适的人脉匹配。
+
+先从简单的开始吧——**你叫什么名字？做什么工作的？**`;
+}
+
+// Typing indicator component (Issue 3)
+function TypingIndicator() {
+  return (
+    <div className="flex justify-start">
+      <div className="bg-white text-gray-800 rounded-2xl px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Progress ring component (Issue 4)
+function ProgressRing({ progress, size = 60 }: { progress: number; size?: number }) {
+  const strokeWidth = 4;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="#e5e7eb"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: INITIAL_MESSAGE },
-  ]);
+  const supabase = createClient();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [currentStep, setCurrentStep] = useState(0);
-  const [profileData, setProfileData] = useState<Partial<ProfileData>>({});
+  const [profileData, setProfileData] = useState<Partial<OnboardingProfileData>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionId = useRef<string>(Math.random().toString(36).substring(7));
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,251 +127,368 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const parseIntents = (text: string): RelationshipIntent[] => {
-    const intents: RelationshipIntent[] = [];
-    const lower = text.toLowerCase();
-    if (lower.includes('professional') || lower.includes('work') || lower.includes('career') || lower.includes('business')) {
-      intents.push('professional');
+  // Save state to localStorage (Issue 1)
+  const saveState = useCallback((msgs: ChatMessage[], data: Partial<OnboardingProfileData>) => {
+    try {
+      const state: StoredState = { messages: msgs, profileData: data };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Ignore localStorage errors
     }
-    if (lower.includes('dating') || lower.includes('romantic') || lower.includes('relationship') || lower.includes('love')) {
-      intents.push('dating');
-    }
-    if (lower.includes('friend') || lower.includes('social')) {
-      intents.push('friendship');
-    }
-    return intents.length > 0 ? intents : ['professional']; // Default to professional
-  };
+  }, []);
 
-  const parseWorkExperience = (text: string): WorkExperience[] => {
-    // Simple parsing - split by common separators
-    const experiences: WorkExperience[] = [];
-    const parts = text.split(/[,;]|\band\b/i).filter(Boolean);
+  // Load state from localStorage
+  const loadState = useCallback((): StoredState | null => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored) as StoredState;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return null;
+  }, []);
 
-    for (const part of parts.slice(0, 3)) {
-      const trimmed = part.trim();
-      if (trimmed.length > 0) {
-        // Try to extract company and title
-        const atMatch = trimmed.match(/(.+?)\s+at\s+(.+)/i);
-        if (atMatch) {
-          experiences.push({
-            title: atMatch[1].trim(),
-            company: atMatch[2].trim(),
-            start_date: new Date().toISOString(),
-            end_date: null,
-            description: null,
-            is_current: true,
-          });
-        } else {
-          experiences.push({
-            title: trimmed,
-            company: '',
-            start_date: new Date().toISOString(),
-            end_date: null,
-            description: null,
-            is_current: true,
-          });
+  // Clear stored state
+  const clearState = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Fetch user info and check for existing profile (Issue 10)
+  useEffect(() => {
+    async function initialize() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Check if profile already exists (Issue 10)
+      const { data: existingProfile } = await supabase
+        .from('memory_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingProfile) {
+        clearState();
+        router.push('/dashboard');
+        return;
+      }
+
+      const info: UserInfo = {
+        name: user.user_metadata?.name || user.user_metadata?.full_name,
+        avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url,
+        email: user.email,
+      };
+      setUserInfo(info);
+
+      // Try to restore state from localStorage
+      const storedState = loadState();
+      if (storedState && storedState.messages.length > 0) {
+        setMessages(storedState.messages);
+        setProfileData(storedState.profileData);
+      } else {
+        // Initialize with welcome message
+        const initialMsg: ChatMessage = { role: 'assistant', content: getInitialMessage(info) };
+        setMessages([initialMsg]);
+
+        // Pre-fill profile data if we have user info
+        if (info.name) {
+          setProfileData({ display_name: info.name });
         }
       }
+
+      setIsInitialized(true);
+      // Trigger fade-in animation (Delight #4)
+      setTimeout(() => setFadeIn(true), 50);
     }
+    initialize();
+  }, [supabase, router, loadState, clearState]);
 
-    return experiences;
-  };
+  // Calculate progress
+  const completedFields = PROFILE_FIELDS.filter(({ key }) => {
+    const v = profileData[key as keyof OnboardingProfileData];
+    return v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
+  });
+  const progress = Math.round((completedFields.length / PROFILE_FIELDS.length) * 100);
 
-  const parseList = (text: string): string[] => {
-    return text
-      .split(/[,;]|\band\b/i)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0 && s.length < 100)
-      .slice(0, 10);
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isSubmitting) return;
+    if (!input.trim() || isLoading || isSubmitting) return;
 
     const userMessage = input.trim();
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
-    // Process the answer based on current step
-    const questionKey = currentStep === 0 ? 'display_name' : QUESTIONS[currentStep - 1]?.key;
+    // Add user message
+    const newMessages: ChatMessage[] = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
+    setIsLoading(true);
 
-    let updatedData = { ...profileData };
+    try {
+      // Call AI onboarding API
+      const response = await fetch('/api/chat/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMessages,
+          profileData,
+          sessionId: sessionId.current,
+        }),
+      });
 
-    switch (questionKey) {
-      case 'display_name':
-        updatedData.display_name = userMessage;
-        break;
-      case 'headline':
-        updatedData.headline = userMessage;
-        break;
-      case 'location':
-        updatedData.location = userMessage;
-        break;
-      case 'work_experience':
-        updatedData.work_experience = parseWorkExperience(userMessage);
-        break;
-      case 'skills':
-        updatedData.skills = parseList(userMessage);
-        break;
-      case 'can_offer':
-        updatedData.can_offer = parseList(userMessage);
-        break;
-      case 'looking_for':
-        updatedData.looking_for = parseList(userMessage);
-        break;
-      case 'current_goals':
-        updatedData.current_goals = parseList(userMessage);
-        break;
-      case 'interests':
-        updatedData.interests = parseList(userMessage);
-        break;
-      case 'values':
-        updatedData.values = parseList(userMessage);
-        break;
-      case 'intents':
-        updatedData.intents = parseIntents(userMessage);
-        break;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+
+      const data = await response.json();
+      const { reply, extracted, isComplete } = data;
+
+      // Update profile data with extracted info
+      const updatedProfileData = { ...profileData };
+      if (extracted) {
+        Object.entries(extracted).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            const existingValue = updatedProfileData[key as keyof OnboardingProfileData];
+            if (Array.isArray(value) && Array.isArray(existingValue)) {
+              // Merge arrays, avoiding duplicates
+              const merged = [...existingValue];
+              for (const item of value) {
+                if (!merged.some(e => JSON.stringify(e) === JSON.stringify(item))) {
+                  merged.push(item);
+                }
+              }
+              (updatedProfileData as Record<string, unknown>)[key] = merged;
+            } else {
+              (updatedProfileData as Record<string, unknown>)[key] = value;
+            }
+          }
+        });
+      }
+      setProfileData(updatedProfileData);
+
+      // Add assistant reply
+      const updatedMessages: ChatMessage[] = [...newMessages, { role: 'assistant', content: reply }];
+      setMessages(updatedMessages);
+
+      // Save state to localStorage
+      saveState(updatedMessages, updatedProfileData);
+
+      // If complete, submit profile
+      if (isComplete) {
+        await submitProfile(updatedProfileData);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage = error instanceof Error ? error.message : '出了点问题';
+      setMessages([
+        ...newMessages,
+        { role: 'assistant', content: `抱歉，${errorMessage}。请再试一次。` },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setProfileData(updatedData);
+  const submitProfile = async (data: Partial<OnboardingProfileData>) => {
+    setIsSubmitting(true);
 
-    // Check if we're done
-    if (currentStep >= QUESTIONS.length) {
-      // Submit the profile
-      setIsSubmitting(true);
+    try {
+      // Normalize work_experience to ensure required fields
+      const normalizedWorkExperience = (data.work_experience || []).map((exp: Partial<WorkExperience>) => ({
+        company: exp.company || '',
+        title: exp.title || '',
+        start_date: exp.start_date || new Date().toISOString().split('T')[0],
+        end_date: exp.end_date || null,
+        description: exp.description || null,
+        is_current: exp.is_current ?? true,
+      }));
+
+      // Ensure required fields have defaults
+      const profilePayload = {
+        display_name: data.display_name || 'User',
+        headline: data.headline || '',
+        location: data.location || '',
+        work_experience: normalizedWorkExperience,
+        skills: data.skills || [],
+        can_offer: data.can_offer || [],
+        looking_for: data.looking_for || [],
+        current_goals: data.current_goals || [],
+        interests: data.interests || [],
+        values: data.values || [],
+        intents: data.intents?.length ? data.intents : ['professional' as RelationshipIntent],
+      };
+
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profilePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create profile');
+      }
+
+      // Clear stored state on success
+      clearState();
+
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Profile submission error:', error);
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: "Perfect! I'm creating your profile and generating your AI agent. This will take just a moment...",
+          content: '创建档案时出了点问题，请稍后再试。',
         },
       ]);
-
-      try {
-        const response = await fetch('/api/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedData),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to create profile');
-        }
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: "Your profile has been created and your AI agent is being generated! Redirecting you to the dashboard...",
-          },
-        ]);
-
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-      } catch (error) {
-        console.error('Error creating profile:', error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: "Sorry, there was an error creating your profile. Please try again or contact support.",
-          },
-        ]);
-        setIsSubmitting(false);
-      }
-      return;
+      setIsSubmitting(false);
     }
-
-    // Ask next question
-    const nextQuestion = QUESTIONS[currentStep];
-    let questionText = nextQuestion.question;
-
-    // Replace placeholders
-    if (questionText.includes('{name}')) {
-      questionText = questionText.replace('{name}', updatedData.display_name || 'there');
-    }
-
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'assistant', content: questionText }]);
-      setCurrentStep((prev) => prev + 1);
-    }, 500);
   };
 
-  const progress = Math.round((currentStep / (QUESTIONS.length + 1)) * 100);
+  // Show loading while initializing
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3">
+      <header className="p-4 border-b bg-white/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-slate-900">A2A</a>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-slate-500">
-              Step {Math.min(currentStep + 1, QUESTIONS.length + 1)} of {QUESTIONS.length + 1}
+          <h1 className="text-xl font-semibold text-gray-800">创建你的档案</h1>
+          <button
+            onClick={() => setShowProgress(!showProgress)}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition"
+          >
+            <div className="relative">
+              <ProgressRing progress={progress} size={36} />
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
+                {completedFields.length}
+              </span>
             </div>
-            <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+            <span className="hidden sm:inline">/ {PROFILE_FIELDS.length}</span>
+          </button>
+        </div>
+
+        {/* Progress detail panel (Issue 4) */}
+        {showProgress && (
+          <div className="max-w-2xl mx-auto mt-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex flex-wrap gap-2">
+              {PROFILE_FIELDS.map(({ key, label }) => {
+                const v = profileData[key as keyof OnboardingProfileData];
+                const filled = v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
+                return (
+                  <span
+                    key={key}
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      filled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {filled ? '✓' : '○'} {label}
+                  </span>
+                );
+              })}
             </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-slate-200 text-slate-900'
+                    : 'bg-white text-gray-800 shadow-sm'
                 }`}
               >
-                <div
-                  className="whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{
-                    __html: message.content
-                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\n/g, '<br />')
-                  }}
-                />
+                {message.role === 'assistant' ? (
+                  <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="my-1">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                )}
               </div>
             </div>
           ))}
+
+          {/* Typing indicator (Issue 3) */}
+          {isLoading && <TypingIndicator />}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
 
+      {/* Suggestion bubbles (Delight #5) */}
+      {messages.length <= 2 && !isLoading && (
+        <div className="px-4 pb-2">
+          <div className="max-w-2xl mx-auto flex flex-wrap gap-2">
+            {SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="px-3 py-1.5 text-sm bg-white text-gray-600 rounded-full border border-gray-200 hover:border-blue-300 hover:text-blue-600 transition"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
-      <div className="bg-white border-t border-slate-200 px-4 py-4">
+      <div className="p-4 border-t bg-white/80 backdrop-blur">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
           <div className="flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isSubmitting ? 'Creating your profile...' : 'Type your answer...'}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100"
-              autoFocus
+              placeholder={isSubmitting ? '正在创建档案...' : '输入你的回答...'}
+              disabled={isLoading || isSubmitting}
+              maxLength={2000}
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
             />
             <button
               type="submit"
-              disabled={!input.trim() || isSubmitting}
+              disabled={!input.trim() || isLoading || isSubmitting}
               className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? (
+              {isLoading || isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle
@@ -321,12 +508,23 @@ export default function OnboardingPage() {
                   </svg>
                 </span>
               ) : (
-                'Send'
+                '发送'
               )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* CSS for animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

@@ -268,3 +268,32 @@ export interface CreateMeetingInput {
   platform: MeetingPlatform;
   timezone: string;
 }
+
+// ============================================
+// Onboarding Chat Types
+// ============================================
+
+export interface ChatMessage {
+  role: 'assistant' | 'user';
+  content: string;
+}
+
+export interface OnboardingProfileData {
+  display_name?: string;
+  headline?: string;
+  location?: string;
+  work_experience?: WorkExperience[];
+  skills?: string[];
+  can_offer?: string[];
+  looking_for?: string[];
+  current_goals?: string[];
+  interests?: string[];
+  values?: string[];
+  intents?: RelationshipIntent[];
+}
+
+export interface OnboardingChatResult {
+  reply: string;
+  extracted: Partial<OnboardingProfileData>;
+  isComplete: boolean;
+}
