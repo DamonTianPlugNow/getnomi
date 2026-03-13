@@ -1,4 +1,4 @@
-# A2A Platform
+# GetNomi, your personal memory assistant
 
 Agent-to-Agent relationship matching platform. Create your memory profile, let AI generate your agent, and connect with people who truly match your goals and values.
 
