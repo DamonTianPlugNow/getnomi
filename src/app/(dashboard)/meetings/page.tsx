@@ -206,7 +206,7 @@ export default async function MeetingsPage() {
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/dashboard" className="text-2xl font-bold text-slate-900">
-            A2A
+            Nomi
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/matches" className="text-slate-600 hover:text-slate-900 transition">

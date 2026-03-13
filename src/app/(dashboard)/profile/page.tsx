@@ -24,6 +24,7 @@ interface ProfileData {
     interests: string[];
     values: string[];
     intents: RelationshipIntent[];
+    is_active: boolean;
   } | null;
   agent_profiles: Array<{
     id: string;
@@ -37,124 +38,95 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Edit form state
-  const [formData, setFormData] = useState<{
-    display_name: string;
-    headline: string;
-    location: string;
-    skills: string[];
-    can_offer: string[];
-    looking_for: string[];
-    current_goals: string[];
-    interests: string[];
-    values: string[];
-    intents: RelationshipIntent[];
-  }>({
-    display_name: '',
-    headline: '',
-    location: '',
-    skills: [],
-    can_offer: [],
-    looking_for: [],
-    current_goals: [],
-    interests: [],
-    values: [],
-    intents: [],
-  });
+  const [matchingEnabled, setMatchingEnabled] = useState(false);
+  const [togglingMatching, setTogglingMatching] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const supabase = createClient();
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      // Fetch user with memory profile and agent profiles
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          memory_profile:memory_profiles(*),
-          agent_profiles(id, intent, summary, talking_points)
-        `)
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        setError('加载个人资料失败');
-        setLoading(false);
-        return;
-      }
-
-      // Handle memory_profile being an array (from the join)
-      const memoryProfile = Array.isArray(data.memory_profile)
-        ? data.memory_profile[0] || null
-        : data.memory_profile;
-
-      const profileData: ProfileData = {
-        ...data,
-        memory_profile: memoryProfile,
-      };
-
-      setProfile(profileData);
-
-      if (profileData.memory_profile) {
-        setFormData({
-          display_name: profileData.memory_profile.display_name || '',
-          headline: profileData.memory_profile.headline || '',
-          location: profileData.memory_profile.location || '',
-          skills: profileData.memory_profile.skills || [],
-          can_offer: profileData.memory_profile.can_offer || [],
-          looking_for: profileData.memory_profile.looking_for || [],
-          current_goals: profileData.memory_profile.current_goals || [],
-          interests: profileData.memory_profile.interests || [],
-          values: profileData.memory_profile.values || [],
-          intents: profileData.memory_profile.intents || [],
-        });
-      }
-
-      setLoading(false);
-    };
-
     fetchProfile();
-  }, [router]);
+  }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
+  const fetchProfile = async () => {
+    const supabase = createClient();
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Fetch user with memory profile and agent profiles
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, name, email, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    if (userError || !userData) {
+      setError('Failed to load profile');
+      setLoading(false);
+      return;
+    }
+
+    // Fetch memory profile
+    const { data: memoryProfile } = await supabase
+      .from('memory_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    // Fetch agent profiles
+    const { data: agentProfiles } = await supabase
+      .from('agent_profiles')
+      .select('id, intent, summary, talking_points')
+      .eq('user_id', user.id);
+
+    setProfile({
+      ...userData,
+      memory_profile: memoryProfile || null,
+      agent_profiles: agentProfiles || [],
+    });
+    setMatchingEnabled(memoryProfile?.is_active || false);
+    setLoading(false);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const response = await fetch('/api/profile/export');
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${profile?.memory_profile?.display_name || 'profile'}.md`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      setError('Failed to export profile');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleToggleMatching = async () => {
+    setTogglingMatching(true);
     try {
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ is_active: !matchingEnabled }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '保存失败');
-      }
-
-      setSuccessMessage('个人资料已更新！AI Agent 正在重新生成中...');
-      setEditMode(false);
-
-      // Refresh profile data
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '保存失败');
+      if (!response.ok) throw new Error('Failed to update');
+      setMatchingEnabled(!matchingEnabled);
+    } catch {
+      setError('Failed to update matching status');
     } finally {
-      setSaving(false);
+      setTogglingMatching(false);
     }
   };
 
@@ -164,444 +136,352 @@ export default function ProfilePage() {
     router.push('/');
   };
 
-  const handleArrayInput = (
-    field: keyof typeof formData,
-    value: string
-  ) => {
-    const items = value.split(',').map((s) => s.trim()).filter(Boolean);
-    setFormData((prev) => ({ ...prev, [field]: items }));
-  };
-
-  const toggleIntent = (intent: RelationshipIntent) => {
-    setFormData((prev) => ({
-      ...prev,
-      intents: prev.intents.includes(intent)
-        ? prev.intents.filter((i) => i !== intent)
-        : [...prev.intents, intent],
-    }));
+  const getIntentLabel = (intent: RelationshipIntent) => {
+    const labels: Record<RelationshipIntent, string> = {
+      professional: '💼 Professional',
+      dating: '💕 Dating',
+      friendship: '🤝 Friendship',
+    };
+    return labels[intent];
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  const getIntentLabel = (intent: RelationshipIntent) => {
-    switch (intent) {
-      case 'professional': return '💼 职业';
-      case 'dating': return '💕 交友';
-      case 'friendship': return '🤝 友谊';
-      default: return intent;
-    }
-  };
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <p className="text-white/60">Profile not found</p>
+      </div>
+    );
+  }
 
-  const getAgentStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">已激活</span>;
-      case 'generating':
-        return <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700">生成中</span>;
-      case 'error':
-        return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">生成失败</span>;
-      default:
-        return <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-500">{status}</span>;
-    }
-  };
+  const mp = profile.memory_profile;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#0a0a0f] text-white relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[100px]" />
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold text-slate-900">
-            A2A
+      <header className="relative z-10 border-b border-white/[0.06]">
+        <div className="max-w-5xl mx-auto px-6 py-5 flex justify-between items-center">
+          <Link href="/dashboard" className="group flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/25">
+              <span className="text-white font-bold text-lg">N</span>
+            </div>
+            <span className="text-xl font-semibold tracking-tight text-white/90 group-hover:text-white transition-colors">
+              Nomi
+            </span>
           </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/matches" className="text-slate-600 hover:text-slate-900 transition">
+
+          <nav className="flex items-center gap-1">
+            <Link href="/dashboard" className="px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all">
+              Dashboard
+            </Link>
+            <Link href="/matches" className="px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all">
               Matches
             </Link>
-            <Link href="/meetings" className="text-slate-600 hover:text-slate-900 transition">
-              Meetings
-            </Link>
-            <Link href="/profile" className="text-blue-600 font-medium">
+            <Link href="/profile" className="px-4 py-2 text-sm text-white bg-white/[0.05] rounded-lg">
               Profile
             </Link>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Success Message */}
-        {successMessage && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-green-700">
-            {successMessage}
-          </div>
-        )}
-
-        {/* Error Message */}
+      <main className="relative z-10 max-w-5xl mx-auto px-6 py-12">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
             {error}
+            <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
           </div>
         )}
 
-        {/* Profile Header */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center">
-                {profile?.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.name || ''}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-medium text-slate-500">
-                    {profile?.name?.[0] || profile?.email?.[0]?.toUpperCase() || '?'}
-                  </span>
-                )}
+        {/* Hero Section */}
+        <div className="mb-12">
+          <div className="flex items-center gap-6 mb-6">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-2xl object-cover ring-2 ring-white/10" />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center ring-2 ring-white/10">
+                <span className="text-3xl text-white/60 font-medium">
+                  {mp?.display_name?.[0] || profile.name?.[0] || '?'}
+                </span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">
-                  {profile?.memory_profile?.display_name || profile?.name || '未设置'}
-                </h1>
-                <p className="text-slate-600">{profile?.memory_profile?.headline || '无标题'}</p>
-                <p className="text-sm text-slate-400">{profile?.email}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {!editMode ? (
-                <button
-                  onClick={() => setEditMode(true)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition"
-                >
-                  编辑资料
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setEditMode(false)}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                </>
+            )}
+            <div>
+              <h1 className="text-3xl font-serif font-light text-white mb-1">
+                {mp?.display_name || profile.name || 'Anonymous'}
+              </h1>
+              {mp?.headline && (
+                <p className="text-white/50">{mp.headline}</p>
+              )}
+              {mp?.location && (
+                <p className="text-white/30 text-sm mt-1">📍 {mp.location}</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Edit Mode */}
-        {editMode && profile?.memory_profile && (
-          <div className="space-y-6 mb-6">
-            {/* Basic Info */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">基本信息</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">显示名称</label>
-                  <input
-                    type="text"
-                    value={formData.display_name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, display_name: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">头衔/职位</label>
-                  <input
-                    type="text"
-                    value={formData.headline}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, headline: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">所在地</label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Intents */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">关系类型</h3>
-              <div className="flex gap-3">
-                {(['professional', 'dating', 'friendship'] as RelationshipIntent[]).map((intent) => (
-                  <button
-                    key={intent}
-                    type="button"
-                    onClick={() => toggleIntent(intent)}
-                    className={`px-4 py-2 rounded-lg border-2 font-medium transition ${
-                      formData.intents.includes(intent)
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    {getIntentLabel(intent)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Skills */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">技能专长</h3>
-              <input
-                type="text"
-                value={formData.skills.join(', ')}
-                onChange={(e) => handleArrayInput('skills', e.target.value)}
-                placeholder="用逗号分隔，如：产品设计, 用户研究, 数据分析"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Can Offer */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">我能提供</h3>
-              <input
-                type="text"
-                value={formData.can_offer.join(', ')}
-                onChange={(e) => handleArrayInput('can_offer', e.target.value)}
-                placeholder="用逗号分隔，如：技术指导, 行业洞察, 投资建议"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Looking For */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">我在寻找</h3>
-              <input
-                type="text"
-                value={formData.looking_for.join(', ')}
-                onChange={(e) => handleArrayInput('looking_for', e.target.value)}
-                placeholder="用逗号分隔，如：合伙人, 投资人, 技术顾问"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Current Goals */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">当前目标</h3>
-              <input
-                type="text"
-                value={formData.current_goals.join(', ')}
-                onChange={(e) => handleArrayInput('current_goals', e.target.value)}
-                placeholder="用逗号分隔，如：完成 A 轮融资, 扩展海外市场"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Interests */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">兴趣爱好</h3>
-              <input
-                type="text"
-                value={formData.interests.join(', ')}
-                onChange={(e) => handleArrayInput('interests', e.target.value)}
-                placeholder="用逗号分隔，如：登山, 摄影, 阅读"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Values */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">价值观</h3>
-              <input
-                type="text"
-                value={formData.values.join(', ')}
-                onChange={(e) => handleArrayInput('values', e.target.value)}
-                placeholder="用逗号分隔，如：真诚, 创新, 协作"
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        {!mp ? (
+          /* No Profile - CTA to create */
+          <div className="relative p-8 rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 backdrop-blur-xl" />
+            <div className="absolute inset-0 border border-white/10 rounded-2xl" />
+            <div className="relative text-center">
+              <h2 className="text-2xl font-serif text-white mb-3">Create Your Digital Manual</h2>
+              <p className="text-white/50 mb-6 max-w-md mx-auto">
+                Chat with AI to build your personal context. It only takes a few minutes.
+              </p>
+              <Link
+                href="/onboarding"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#0a0a0f] rounded-xl font-medium hover:bg-white/90 transition-colors"
+              >
+                Get Started
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
             </div>
           </div>
-        )}
-
-        {/* View Mode - Memory Profile */}
-        {!editMode && profile?.memory_profile && (
-          <div className="space-y-6 mb-6">
-            {/* Location & Intents */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <div className="flex flex-wrap gap-4">
-                {profile.memory_profile.location && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {profile.memory_profile.location}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  {profile.memory_profile.intents.map((intent) => (
-                    <span
-                      key={intent}
-                      className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                    >
-                      {getIntentLabel(intent)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Skills */}
-            {profile.memory_profile.skills.length > 0 && (
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-3">技能专长</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile.memory_profile.skills.map((skill, i) => (
-                    <span key={i} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Can Offer & Looking For */}
-            <div className="grid grid-cols-2 gap-4">
-              {profile.memory_profile.can_offer.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-6">
-                  <h3 className="font-semibold text-slate-900 mb-3">我能提供</h3>
-                  <ul className="space-y-2">
-                    {profile.memory_profile.can_offer.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-slate-600">
-                        <span className="text-green-500 mt-1">+</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {profile.memory_profile.looking_for.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-6">
-                  <h3 className="font-semibold text-slate-900 mb-3">我在寻找</h3>
-                  <ul className="space-y-2">
-                    {profile.memory_profile.looking_for.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-slate-600">
-                        <span className="text-blue-500 mt-1">*</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Current Goals */}
-            {profile.memory_profile.current_goals.length > 0 && (
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-3">当前目标</h3>
-                <ul className="space-y-2">
-                  {profile.memory_profile.current_goals.map((goal, i) => (
-                    <li key={i} className="flex items-start gap-2 text-slate-600">
-                      <span className="text-amber-500 mt-1">*</span>
-                      {goal}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Interests & Values */}
-            <div className="grid grid-cols-2 gap-4">
-              {profile.memory_profile.interests.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-6">
-                  <h3 className="font-semibold text-slate-900 mb-3">兴趣爱好</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.memory_profile.interests.map((interest, i) => (
-                      <span key={i} className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {profile.memory_profile.values.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-6">
-                  <h3 className="font-semibold text-slate-900 mb-3">价值观</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.memory_profile.values.map((value, i) => (
-                      <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm">
-                        {value}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* No Profile */}
-        {!profile?.memory_profile && (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center mb-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">尚未创建个人资料</h3>
-            <p className="text-slate-600 mb-4">完成入职流程以创建您的 Memory Profile</p>
-            <Link
-              href="/onboarding"
-              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              开始创建
-            </Link>
-          </div>
-        )}
-
-        {/* AI Agent Profiles */}
-        {profile?.agent_profiles && profile.agent_profiles.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">你的 AI Agent</h2>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column - Actions */}
             <div className="space-y-4">
-              {profile.agent_profiles.map((agent) => (
-                <div key={agent.id} className="border border-slate-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-slate-900">{getIntentLabel(agent.intent)}</span>
-                    {getAgentStatusBadge(agent.status)}
+              {/* Action Buttons */}
+              <div className="relative rounded-2xl overflow-hidden">
+                <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
+                <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
+                <div className="relative p-6 space-y-4">
+                  <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">Actions</h3>
+
+                  {/* Update via Chat */}
+                  <Link
+                    href="/profile/chat"
+                    className="flex items-center gap-3 w-full p-4 rounded-xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/20 hover:border-violet-500/40 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium">Update Profile</p>
+                      <p className="text-white/40 text-sm">Chat with AI to update</p>
+                    </div>
+                    <svg className="w-5 h-5 text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+
+                  {/* Export */}
+                  <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="flex items-center gap-3 w-full p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-white font-medium">Export .md</p>
+                      <p className="text-white/40 text-sm">Download your manual</p>
+                    </div>
+                    {exporting && (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    )}
+                  </button>
+
+                  {/* Matching Toggle */}
+                  <div className="flex items-center gap-3 w-full p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${matchingEnabled ? 'bg-blue-500/20' : 'bg-white/[0.05]'}`}>
+                      <svg className={`w-5 h-5 ${matchingEnabled ? 'text-blue-400' : 'text-white/40'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium">Matching</p>
+                      <p className="text-white/40 text-sm">{matchingEnabled ? 'Visible to others' : 'Hidden from matching'}</p>
+                    </div>
+                    <button
+                      onClick={handleToggleMatching}
+                      disabled={togglingMatching}
+                      className={`relative w-12 h-7 rounded-full transition-colors ${matchingEnabled ? 'bg-blue-500' : 'bg-white/20'}`}
+                    >
+                      <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${matchingEnabled ? 'left-6' : 'left-1'}`} />
+                    </button>
                   </div>
-                  <p className="text-slate-600 text-sm mb-3">{agent.summary}</p>
-                  {agent.talking_points && agent.talking_points.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {agent.talking_points.slice(0, 3).map((point, i) => (
-                        <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">
-                          {point.length > 30 ? point.slice(0, 30) + '...' : point}
-                        </span>
+                </div>
+              </div>
+
+              {/* Sign Out */}
+              <button
+                onClick={handleSignOut}
+                className="w-full p-4 text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-white/[0.06] transition-all"
+              >
+                Sign out
+              </button>
+            </div>
+
+            {/* Right Column - Memory */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Your Memory */}
+              <div className="relative rounded-2xl overflow-hidden">
+                <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
+                <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
+                <div className="relative p-6">
+                  <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Your Memory</h3>
+
+                  <div className="space-y-6">
+                    {/* Goals */}
+                    {mp.current_goals && mp.current_goals.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">Current Goals</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.current_goals.map((goal, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-violet-500/10 text-violet-300 rounded-lg text-sm border border-violet-500/20">
+                              {goal}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Skills */}
+                    {mp.skills && mp.skills.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.skills.map((skill, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-blue-500/10 text-blue-300 rounded-lg text-sm border border-blue-500/20">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Can Offer */}
+                    {mp.can_offer && mp.can_offer.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">What I Can Offer</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.can_offer.map((item, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-300 rounded-lg text-sm border border-emerald-500/20">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Looking For */}
+                    {mp.looking_for && mp.looking_for.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">What I&apos;m Looking For</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.looking_for.map((item, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-amber-500/10 text-amber-300 rounded-lg text-sm border border-amber-500/20">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Interests */}
+                    {mp.interests && mp.interests.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">Interests</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.interests.map((interest, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-pink-500/10 text-pink-300 rounded-lg text-sm border border-pink-500/20">
+                              {interest}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Values */}
+                    {mp.values && mp.values.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">Values</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.values.map((value, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-white/[0.05] text-white/70 rounded-lg text-sm border border-white/10">
+                              {value}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Intents */}
+                    {mp.intents && mp.intents.length > 0 && (
+                      <div>
+                        <p className="text-white/50 text-sm mb-2">Open to Connect</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mp.intents.map((intent, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-fuchsia-500/10 text-fuchsia-300 rounded-lg text-sm border border-fuchsia-500/20">
+                              {getIntentLabel(intent)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Agents */}
+              {matchingEnabled && profile.agent_profiles && profile.agent_profiles.length > 0 && (
+                <div className="relative rounded-2xl overflow-hidden">
+                  <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
+                  <div className="absolute inset-0 border border-white/[0.06] rounded-2xl" />
+                  <div className="relative p-6">
+                    <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Your AI Agents</h3>
+                    <div className="space-y-4">
+                      {profile.agent_profiles.map((agent) => (
+                        <div key={agent.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              agent.intent === 'professional' ? 'bg-blue-500/20 text-blue-300' :
+                              agent.intent === 'dating' ? 'bg-pink-500/20 text-pink-300' :
+                              'bg-emerald-500/20 text-emerald-300'
+                            }`}>
+                              {getIntentLabel(agent.intent)}
+                            </span>
+                          </div>
+                          <p className="text-white/70 text-sm mb-3">{agent.summary}</p>
+                          {agent.talking_points && agent.talking_points.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {agent.talking_points.slice(0, 3).map((point, i) => (
+                                <span key={i} className="px-2 py-1 bg-white/[0.05] text-white/50 rounded text-xs">
+                                  {point.length > 40 ? point.slice(0, 40) + '...' : point}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
-
-        {/* Sign Out */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">账户</h3>
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
-          >
-            退出登录
-          </button>
-        </div>
       </main>
     </div>
   );

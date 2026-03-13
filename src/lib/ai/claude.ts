@@ -420,7 +420,7 @@ Generate a meeting brief. Respond with JSON only.`;
 // Onboarding Chat
 // ============================================
 
-const ONBOARDING_SYSTEM_PROMPT = `你是 A2A 平台的 onboarding 助手。你的目标是通过自然、友好的对话收集用户信息，帮助他们创建个人档案。
+const ONBOARDING_SYSTEM_PROMPT = `你是 Nomi 平台的 onboarding 助手。你的目标是通过自然、友好的对话收集用户信息，帮助他们创建个人档案。
 
 ## 需要收集的信息
 1. display_name - 用户的名字（必填）

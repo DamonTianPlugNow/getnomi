@@ -81,7 +81,7 @@ export const createMeeting = inngest.createFunction(
     const zoomMeeting = await step.run('create-zoom-meeting', async () => {
       const meetingTime = new Date(scheduledTime);
       return createZoomMeeting({
-        topic: `A2A Meeting: ${match.user_a.name} & ${match.user_b.name}`,
+        topic: `Nomi Meeting: ${match.user_a.name} & ${match.user_b.name}`,
         startTime: meetingTime,
         duration: 30,
         timezone: 'UTC',
@@ -147,7 +147,7 @@ export const createMeeting = inngest.createFunction(
       // Email to User A
       await sendEmail({
         to: match.user_a.email,
-        subject: `Your A2A meeting with ${match.user_b.name} is scheduled!`,
+        subject: `Your Nomi meeting with ${match.user_b.name} is scheduled!`,
         html: `
           <h2>Meeting Confirmed! 🎉</h2>
           <p>Great news! Your meeting with <strong>${match.user_b.name}</strong> has been scheduled.</p>
@@ -181,7 +181,7 @@ export const createMeeting = inngest.createFunction(
       // Email to User B
       await sendEmail({
         to: match.user_b.email,
-        subject: `Your A2A meeting with ${match.user_a.name} is scheduled!`,
+        subject: `Your Nomi meeting with ${match.user_a.name} is scheduled!`,
         html: `
           <h2>Meeting Confirmed! 🎉</h2>
           <p>Great news! Your meeting with <strong>${match.user_a.name}</strong> has been scheduled.</p>

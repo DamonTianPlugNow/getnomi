@@ -137,18 +137,7 @@ export async function PUT(request: NextRequest) {
   if (error) return error;
 
   try {
-    // Parse and validate body
     const body = await request.json();
-    const validation = updateProfileSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const input = validation.data;
 
     // Get existing profile
     const { data: existing, error: fetchError } = await supabase
@@ -164,8 +153,44 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update profile
     const adminClient = createAdminClient();
+
+    // Check if this is just a matching toggle (is_active only)
+    if (Object.keys(body).length === 1 && 'is_active' in body) {
+      const { data: profile, error: updateError } = await adminClient
+        .from('memory_profiles')
+        .update({
+          is_active: body.is_active,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating is_active:', updateError);
+        return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        profile,
+        message: body.is_active ? 'Matching enabled' : 'Matching disabled',
+      });
+    }
+
+    // Full profile update - validate with schema
+    const validation = updateProfileSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const input = validation.data;
+
+    // Update profile
     const { data: profile, error: updateError } = await adminClient
       .from('memory_profiles')
       .update({

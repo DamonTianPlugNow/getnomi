@@ -60,7 +60,7 @@ export default function SignUpPage() {
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="text-2xl font-bold text-slate-900">A2A</a>
+          <a href="/" className="text-2xl font-bold text-slate-900">Nomi</a>
           <h1 className="text-3xl font-bold text-slate-900 mt-6 mb-2">
             Create your account
           </h1>

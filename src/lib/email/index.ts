@@ -23,7 +23,7 @@ interface SendEmailOptions {
  * Logs to console in development when Resend is not configured
  */
 export async function sendEmail(options: SendEmailOptions): Promise<{ id: string }> {
-  const { to, subject, html, from = 'A2A Platform <noreply@a2a.app>' } = options;
+  const { to, subject, html, from = 'Nomi <noreply@getnomi.me>' } = options;
 
   // Graceful degradation: log email when Resend is not configured
   if (!isEmailConfigured() || !resend) {
@@ -105,7 +105,7 @@ export async function sendMatchNotification(options: {
         <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
 
         <p style="color: #888; font-size: 12px;">
-          You're receiving this because you have an active profile on A2A Platform.
+          You're receiving this because you have an active profile on Nomi.
         </p>
       </div>
     `,

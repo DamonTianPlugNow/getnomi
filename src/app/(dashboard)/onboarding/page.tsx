@@ -45,13 +45,13 @@ interface StoredState {
 
 function getInitialMessage(userInfo: UserInfo | null): string {
   if (userInfo?.name) {
-    return `你好 ${userInfo.name}！我是 A2A 的 onboarding 助手 👋
+    return `你好 ${userInfo.name}！我是 Nomi 的 onboarding 助手 👋
 
 我看到你已经通过社交账号登录了，接下来我会通过简单的对话帮你完善个人档案，这样我们就能为你找到最合适的人脉匹配。
 
 先告诉我，**你现在做什么工作？在哪个城市？**`;
   }
-  return `你好！我是 A2A 的 onboarding 助手，很高兴认识你 👋
+  return `你好！我是 Nomi 的 onboarding 助手，很高兴认识你 👋
 
 我会通过简单的对话帮你创建个人档案，这样我们就能为你找到最合适的人脉匹配。
 
