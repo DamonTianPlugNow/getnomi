@@ -2,9 +2,59 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
+  baseURL: process.env.ANTHROPIC_BASE_URL || undefined,
 });
 
 export { anthropic };
+
+// Default timeout for LLM calls (30 seconds)
+export const LLM_TIMEOUT_MS = 30000;
+
+/**
+ * Extract JSON from text, handling markdown code blocks
+ * Exported for testing
+ */
+export function extractJSON(text: string): unknown {
+  // Try direct parse first
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Try to extract from markdown code block
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[1].trim());
+      } catch {
+        // Fall through to final error
+      }
+    }
+
+    // Try to find JSON object in text
+    const objectMatch = text.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      try {
+        return JSON.parse(objectMatch[0]);
+      } catch {
+        // Fall through to final error
+      }
+    }
+
+    throw new Error('Could not extract valid JSON from response');
+  }
+}
+
+/**
+ * Wrap a promise with a timeout
+ * Exported for testing
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, operation: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${operation} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 /**
  * Generate Agent Profile from Memory Profile
@@ -79,34 +129,41 @@ Values: ${memoryProfile.values?.join(', ') || 'Not provided'}
 
 Create an agent profile for ${intent} matching. Respond with JSON only.`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: userContent,
-      },
-    ],
-    system: systemPrompt,
-  });
+  const response = await withTimeout(
+    anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: userContent,
+        },
+      ],
+      system: systemPrompt,
+    }),
+    LLM_TIMEOUT_MS,
+    'generateAgentProfile'
+  );
 
   const content = response.content[0];
   if (content.type !== 'text') {
     throw new Error('Unexpected response type from Claude');
   }
 
-  try {
-    const parsed = JSON.parse(content.text);
-    return {
-      summary: parsed.summary,
-      talking_points: parsed.talking_points,
-      ideal_match_description: parsed.ideal_match_description,
-      conversation_starters: parsed.conversation_starters,
-    };
-  } catch {
-    throw new Error('Failed to parse Claude response as JSON');
-  }
+  const parsed = extractJSON(content.text) as {
+    summary?: string;
+    talking_points?: string[];
+    ideal_match_description?: string;
+    conversation_starters?: string[];
+  };
+
+  // Validate required fields with defaults
+  return {
+    summary: parsed.summary || `${memoryProfile.display_name} - ${intent} profile`,
+    talking_points: parsed.talking_points || [],
+    ideal_match_description: parsed.ideal_match_description || 'Looking for meaningful connections',
+    conversation_starters: parsed.conversation_starters || [],
+  };
 }
 
 /**
@@ -186,17 +243,21 @@ Values: ${c.values?.join(', ') || 'Not specified'}
 
 Rank these candidates for ${intent} matching. Only include candidates with score >= 0.6. Respond with JSON only.`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    messages: [
-      {
-        role: 'user',
-        content: userContent,
-      },
-    ],
-    system: systemPrompt,
-  });
+  const response = await withTimeout(
+    anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2048,
+      messages: [
+        {
+          role: 'user',
+          content: userContent,
+        },
+      ],
+      system: systemPrompt,
+    }),
+    LLM_TIMEOUT_MS,
+    'rankMatchCandidates'
+  );
 
   const content = response.content[0];
   if (content.type !== 'text') {
@@ -204,10 +265,20 @@ Rank these candidates for ${intent} matching. Only include candidates with score
   }
 
   try {
-    const parsed = JSON.parse(content.text);
-    return parsed.rankings || [];
-  } catch {
-    throw new Error('Failed to parse Claude ranking response');
+    const parsed = extractJSON(content.text) as { rankings?: unknown[] };
+    return (parsed.rankings || []) as Array<{
+      id: string;
+      score: number;
+      reasons: Array<{
+        type: 'common_interest' | 'complementary_skill' | 'shared_goal' | 'mutual_value';
+        description: string;
+        weight: number;
+      }>;
+    }>;
+  } catch (err) {
+    console.error('Failed to parse ranking response:', err);
+    // Return empty array on parse failure instead of throwing
+    return [];
   }
 }
 
@@ -253,17 +324,21 @@ ${matchReasons.map(r => `- ${r.description}`).join('\n')}
 
 Generate a meeting brief. Respond with JSON only.`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: userContent,
-      },
-    ],
-    system: systemPrompt,
-  });
+  const response = await withTimeout(
+    anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: userContent,
+        },
+      ],
+      system: systemPrompt,
+    }),
+    LLM_TIMEOUT_MS,
+    'generateMeetingBrief'
+  );
 
   const content = response.content[0];
   if (content.type !== 'text') {
@@ -271,8 +346,31 @@ Generate a meeting brief. Respond with JSON only.`;
   }
 
   try {
-    return JSON.parse(content.text);
-  } catch {
-    throw new Error('Failed to parse meeting brief response');
+    const parsed = extractJSON(content.text) as {
+      user_a_summary?: string;
+      user_b_summary?: string;
+      common_topics?: string[];
+      suggested_agenda?: string[];
+      ice_breakers?: string[];
+    };
+
+    // Return with defaults for missing fields
+    return {
+      user_a_summary: parsed.user_a_summary || userA.summary,
+      user_b_summary: parsed.user_b_summary || userB.summary,
+      common_topics: parsed.common_topics || [],
+      suggested_agenda: parsed.suggested_agenda || ['Introduce yourselves', 'Discuss shared interests'],
+      ice_breakers: parsed.ice_breakers || ['What are you currently working on?'],
+    };
+  } catch (err) {
+    console.error('Failed to parse meeting brief response:', err);
+    // Return fallback brief
+    return {
+      user_a_summary: userA.summary,
+      user_b_summary: userB.summary,
+      common_topics: [],
+      suggested_agenda: ['Introduce yourselves', 'Discuss shared interests'],
+      ice_breakers: ['What are you currently working on?'],
+    };
   }
 }

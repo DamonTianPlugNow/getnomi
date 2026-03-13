@@ -1,54 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/auth/requireAuth';
 import { inngest } from '@/inngest/client';
-import { z } from 'zod';
+import { createProfileSchema, updateProfileSchema } from '@/lib/schemas';
 import type { CreateMemoryProfileInput, RelationshipIntent } from '@/types';
-
-// Validation schema
-const createProfileSchema = z.object({
-  display_name: z.string().min(1).max(100),
-  headline: z.string().max(200).optional(),
-  location: z.string().max(100).optional(),
-  work_experience: z
-    .array(
-      z.object({
-        company: z.string(),
-        title: z.string(),
-        start_date: z.string(),
-        end_date: z.string().nullable().optional(),
-        description: z.string().nullable().optional(),
-        is_current: z.boolean().optional(),
-      })
-    )
-    .optional(),
-  skills: z.array(z.string()).max(20).optional(),
-  can_offer: z.array(z.string()).max(10).optional(),
-  looking_for: z.array(z.string()).max(10).optional(),
-  current_goals: z.array(z.string()).max(5).optional(),
-  interests: z.array(z.string()).max(20).optional(),
-  values: z.array(z.string()).max(10).optional(),
-  intents: z.array(z.enum(['professional', 'dating', 'friendship'])).min(1),
-});
-
-const updateProfileSchema = createProfileSchema.partial();
 
 /**
  * GET /api/profile - Get current user's profile
  */
 export async function GET() {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { data: profile, error } = await supabase
+    const { data: profile, error: fetchError } = await supabase
       .from('memory_profiles')
       .select(
         `
@@ -67,9 +32,9 @@ export async function GET() {
       .eq('user_id', user.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       // PGRST116 = no rows returned
-      console.error('Error fetching profile:', error);
+      console.error('Error fetching profile:', fetchError);
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
     }
 
@@ -84,18 +49,10 @@ export async function GET() {
  * POST /api/profile - Create a new profile
  */
 export async function POST(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse and validate body
     const body = await request.json();
     const validation = createProfileSchema.safeParse(body);
@@ -125,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Create profile
     const adminClient = createAdminClient();
-    const { data: profile, error } = await adminClient
+    const { data: profile, error: createError } = await adminClient
       .from('memory_profiles')
       .insert({
         user_id: user.id,
@@ -145,8 +102,8 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating profile:', error);
+    if (createError) {
+      console.error('Error creating profile:', createError);
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
     }
 
@@ -176,18 +133,10 @@ export async function POST(request: NextRequest) {
  * PUT /api/profile - Update existing profile
  */
 export async function PUT(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse and validate body
     const body = await request.json();
     const validation = updateProfileSchema.safeParse(body);
@@ -217,7 +166,7 @@ export async function PUT(request: NextRequest) {
 
     // Update profile
     const adminClient = createAdminClient();
-    const { data: profile, error } = await adminClient
+    const { data: profile, error: updateError } = await adminClient
       .from('memory_profiles')
       .update({
         ...input,
@@ -228,8 +177,8 @@ export async function PUT(request: NextRequest) {
       .select()
       .single();
 
-    if (error) {
-      console.error('Error updating profile:', error);
+    if (updateError) {
+      console.error('Error updating profile:', updateError);
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
     }
 

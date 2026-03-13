@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
-import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/auth/requireAuth';
+import { timeSlotSchema, feedbackSchema } from '@/lib/schemas';
 
 /**
  * GET /api/meeting - Get current user's meetings
  */
 export async function GET(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse query params
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -51,10 +44,10 @@ export async function GET(request: NextRequest) {
         .gte('scheduled_at', new Date().toISOString());
     }
 
-    const { data: meetings, error, count } = await query;
+    const { data: meetings, error: fetchError, count } = await query;
 
-    if (error) {
-      console.error('Error fetching meetings:', error);
+    if (fetchError) {
+      console.error('Error fetching meetings:', fetchError);
       return NextResponse.json({ error: 'Failed to fetch meetings' }, { status: 500 });
     }
 
@@ -81,29 +74,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Schema for time slot submission
-const timeSlotSchema = z.object({
-  match_id: z.string().uuid(),
-  available_times: z.array(z.string().datetime()).min(1).max(20),
-  timezone: z.string().default('UTC'),
-});
-
 /**
  * POST /api/meeting/timeslots - Submit available time slots for a match
  */
 export async function POST(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse and validate body
     const body = await request.json();
     const validation = timeSlotSchema.safeParse(body);
@@ -200,32 +178,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Schema for feedback submission
-const feedbackSchema = z.object({
-  meeting_id: z.string().uuid(),
-  overall_rating: z.number().int().min(1).max(5),
-  would_meet_again: z.boolean(),
-  highlights: z.string().max(1000).optional(),
-  improvements: z.string().max(1000).optional(),
-  no_show: z.boolean().default(false),
-});
-
 /**
  * PUT /api/meeting - Submit feedback for a meeting
  */
 export async function PUT(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse and validate body
     const body = await request.json();
     const validation = feedbackSchema.safeParse(body);
@@ -237,8 +197,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { meeting_id, overall_rating, would_meet_again, highlights, improvements, no_show } =
-      validation.data;
+    const { meeting_id, feedback: feedbackData } = validation.data;
+    const { did_meet, rating, would_meet_again, highlights, notes } = feedbackData;
 
     // Verify user is part of this meeting
     const { data: meeting, error: meetingError } = await supabase
@@ -277,11 +237,11 @@ export async function PUT(request: NextRequest) {
         meeting_id,
         user_id: user.id,
         target_user_id: targetUserId,
-        overall_rating,
+        overall_rating: rating,
         would_meet_again,
-        highlights,
-        improvements,
-        no_show,
+        highlights: highlights.join(', '),
+        improvements: notes,
+        no_show: !did_meet,
       })
       .select()
       .single();
@@ -292,12 +252,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update meeting status if this is the first feedback and it indicates completion
-    if (!no_show && meeting.status === 'scheduled') {
+    if (did_meet && meeting.status === 'scheduled') {
       await adminClient
         .from('meetings')
         .update({ status: 'completed' })
         .eq('id', meeting_id);
-    } else if (no_show) {
+    } else if (!did_meet) {
       await adminClient
         .from('meetings')
         .update({ status: 'no_show' })

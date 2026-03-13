@@ -94,14 +94,13 @@ export const createMeeting = inngest.createFunction(
         {
           name: match.user_a.name || 'User A',
           summary: match.agent_a.summary,
-          talking_points: match.agent_a.talking_points,
+          interests: match.agent_a.talking_points,
         },
         {
           name: match.user_b.name || 'User B',
           summary: match.agent_b.summary,
-          talking_points: match.agent_b.talking_points,
+          interests: match.agent_b.talking_points,
         },
-        match.intent,
         match.match_reasons
       );
     });

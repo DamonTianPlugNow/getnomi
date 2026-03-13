@@ -66,3 +66,21 @@
 - **What**: 只支持 Zoom
 - **Mitigation**: 后续加飞书/Google Meet
 - **Severity**: LOW
+
+### TD-4: 全局数据库错误处理
+- **What**: API routes 中数据库错误处理分散，缺少统一的错误处理层
+- **Why**: 当数据库连接失败或 RLS 策略阻���访问时，错误信息不够友好
+- **Mitigation**: 创建统一的数据库错误处理 wrapper，提供一致的错误响应格式
+- **Severity**: MEDIUM
+
+### TD-5: React Error Boundary
+- **What**: 前端缺少 Error Boundary 组件
+- **Why**: React 渲染错误会导致整个页面白屏，用户体验差
+- **Mitigation**: 添加全局 Error Boundary + 关键页面局部 Error Boundary
+- **Severity**: MEDIUM
+
+### TD-6: 批量每日匹配优化
+- **What**: dailyMatching 函数对每个用户单独触发 matching/trigger 事件
+- **Why**: 当用户量大时，会产生大量独立的 Inngest 事件，可能触发速率限制
+- **Mitigation**: 改为批量处理，每批 50-100 用户，或使用 Inngest 的 step.sendEvent 批量发送
+- **Severity**: LOW (MVP 阶段用户量小，暂不影响)
