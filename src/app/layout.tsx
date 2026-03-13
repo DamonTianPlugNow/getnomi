@@ -1,27 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Sora } from "next/font/google";
+import { Rosarivo, Mulish } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const rosarivo = Rosarivo({
+  variable: "--font-rosarivo",
   subsets: ["latin"],
+  weight: ["400"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mulish = Mulish({
+  variable: "--font-mulish",
   subsets: ["latin"],
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-const sora = Sora({
-  variable: "--font-sora",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${sora.variable} antialiased`}
+        className={`${rosarivo.variable} ${mulish.variable} antialiased`}
       >
         {children}
       </body>
