@@ -1,9 +1,19 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function SignUpPage() {
   const supabase = createClient();
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
 
   const handleLinkedInSignUp = async () => {
     await supabase.auth.signInWithOAuth({
@@ -22,6 +32,29 @@ export default function SignUpPage() {
         redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
       },
     });
+  };
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      router.push('/onboarding');
+    }
   };
 
   return (
@@ -49,15 +82,6 @@ export default function SignUpPage() {
               Sign up with LinkedIn
             </button>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">or</span>
-              </div>
-            </div>
-
             <button
               onClick={handleGoogleSignUp}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition font-medium border border-slate-200"
@@ -71,6 +95,82 @@ export default function SignUpPage() {
               Sign up with Google
             </button>
           </div>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-slate-500">or</span>
+            </div>
+          </div>
+
+          {/* Email Signup */}
+          {!showEmailSignup ? (
+            <button
+              onClick={() => setShowEmailSignup(true)}
+              className="w-full text-sm text-slate-600 hover:text-slate-900 transition"
+            >
+              Sign up with email
+            </button>
+          ) : (
+            <form onSubmit={handleEmailSignUp} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your name"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="••••••••"
+                  minLength={6}
+                  required
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium disabled:opacity-50"
+              >
+                {loading ? 'Creating account...' : 'Create account'}
+              </button>
+            </form>
+          )}
 
           <div className="mt-6 space-y-4">
             <div className="flex items-start gap-3 text-sm text-slate-600">
