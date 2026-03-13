@@ -18,7 +18,7 @@ export const findMatches = inngest.createFunction(
       limit: 10,
     },
   },
-  { event: 'profile/created' },
+  { event: 'matching/trigger' },
   async ({ event, step }) => {
     const { userId } = event.data;
 
@@ -235,7 +235,7 @@ export const dailyMatching = inngest.createFunction(
 
     // Trigger matching for each user
     const events = activeUsers.map((user) => ({
-      name: 'profile/created' as const,
+      name: 'matching/trigger' as const,
       data: {
         userId: user.user_id,
         memoryProfileId: user.id,

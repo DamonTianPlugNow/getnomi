@@ -137,7 +137,7 @@ export const generateAgentProfiles = inngest.createFunction(
 
     // Step 6: Trigger matching for this user
     await step.sendEvent('trigger-matching', {
-      name: 'profile/created',
+      name: 'matching/trigger',
       data: { userId, memoryProfileId },
     });
 
