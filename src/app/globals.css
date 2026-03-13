@@ -2,35 +2,26 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --coral: #ff6250;
-  --coral-hover: #e2412e;
-  --dark-bg: #2b2b2b;
-  --dark-card: #3b3b3b;
+  --foreground: #37352f;
+  --gray-light: #f7f6f3;
+  --gray-medium: #e3e2de;
+  --accent-blue: #0077cc;
+  --accent-orange: #eb5757;
+  --accent-yellow: #f7c94b;
+  --accent-teal: #0f7b6c;
+  --accent-purple: #9065b0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-mulish);
-  --font-serif: var(--font-rosarivo);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #2b2b2b;
-    --foreground: #f7f7f7;
-  }
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-mulish), sans-serif;
-}
-
-.font-serif {
-  font-family: var(--font-rosarivo), serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .line-clamp-3 {
@@ -38,16 +29,6 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* Anima-style button */
-.btn-coral {
-  background-color: var(--coral);
-  transition: background-color 0.5s ease;
-}
-
-.btn-coral:hover {
-  background-color: var(--coral-hover);
 }
 
 /* Float animation */

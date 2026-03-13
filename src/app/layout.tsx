@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Rosarivo, Mulish } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const rosarivo = Rosarivo({
-  variable: "--font-rosarivo",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400"],
-});
-
-const mulish = Mulish({
-  variable: "--font-mulish",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${rosarivo.variable} ${mulish.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         {children}
       </body>

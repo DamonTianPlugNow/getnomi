@@ -11,296 +11,234 @@ export default async function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#2b2b2b] text-[#f7f7f7] relative overflow-hidden">
-      {/* Subtle gradient background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-[#ff6250]/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-[#ff6250]/3 rounded-full blur-[120px]" />
-      </div>
-
+    <main className="min-h-screen bg-white text-[#37352f]">
       {/* Header */}
-      <header className="relative z-10">
-        <div className="max-w-[77.5em] mx-auto px-8 py-6 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-[#ff6250] flex items-center justify-center shadow-[0_4px_12px_rgba(255,98,80,0.3)] group-hover:shadow-[0_6px_20px_rgba(255,98,80,0.4)] transition-shadow duration-500">
-              <span className="text-white font-bold text-lg">N</span>
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#e3e2de]">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="text-xl font-semibold text-[#f7f7f7] tracking-tight">
+            <span className="text-xl font-semibold text-[#37352f]">
               Nomi
             </span>
           </Link>
 
-          <nav className="flex items-center gap-3">
+          <nav className="flex items-center gap-1">
             <Link
               href="/login"
-              className="px-5 py-2.5 text-sm font-medium text-[#f7f7f7]/70 hover:text-[#f7f7f7] transition-colors duration-300"
+              className="px-4 py-2 text-sm font-medium text-[#37352f]/70 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="px-6 py-2.5 bg-[#ff6250] hover:bg-[#e2412e] text-white text-sm font-semibold rounded-full transition-all duration-500 shadow-[0_4px_12px_rgba(255,98,80,0.3)] hover:shadow-[0_6px_20px_rgba(255,98,80,0.4)]"
+              className="px-4 py-2 bg-[#37352f] hover:bg-[#2f2d28] text-white text-sm font-medium rounded-md transition-colors"
             >
-              Get Started
+              Get Nomi free
             </Link>
           </nav>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-[77.5em] mx-auto px-8 pt-20 pb-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#3b3b3b] rounded-full mb-8">
-              <span className="w-2 h-2 bg-[#ff6250] rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-[#f7f7f7]/70">AI-powered personal context</span>
-            </div>
-
-            <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-[#f7f7f7] mb-8 leading-[1.1]">
-              Your digital
-              <br />
-              <span className="text-[#ff6250]">world manual</span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-[#f7f7f7]/60 mb-10 leading-relaxed max-w-lg">
-              Nomi learns who you are through conversation and creates a portable personal context that works across any AI product.
-            </p>
-
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/signup"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#ff6250] hover:bg-[#e2412e] text-white font-semibold rounded-full transition-all duration-500 shadow-[0_4px_12px_rgba(255,98,80,0.3)] hover:shadow-[0_8px_30px_rgba(255,98,80,0.4)]"
-              >
-                Start Your Story
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-2 px-8 py-4 text-[#f7f7f7]/70 hover:text-[#f7f7f7] font-medium rounded-full border border-[#f7f7f7]/10 hover:border-[#f7f7f7]/20 transition-all duration-300"
-              >
-                Learn More
-              </a>
-            </div>
-          </div>
-
-          {/* Hero Visual */}
-          <div className="relative hidden lg:block">
-            <div className="relative w-full aspect-square max-w-[500px] mx-auto">
-              {/* Decorative circles */}
-              <div className="absolute inset-0 rounded-full border border-[#f7f7f7]/5" />
-              <div className="absolute inset-8 rounded-full border border-[#f7f7f7]/5" />
-              <div className="absolute inset-16 rounded-full border border-[#ff6250]/10" />
-
-              {/* Center card */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 bg-[#3b3b3b] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff6250] to-[#ff8a7a] flex items-center justify-center">
-                    <span className="text-white font-bold">Y</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#f7f7f7]">Your Profile</p>
-                    <p className="text-sm text-[#f7f7f7]/50">nomi.md</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2 bg-[#f7f7f7]/10 rounded-full w-full" />
-                  <div className="h-2 bg-[#f7f7f7]/10 rounded-full w-4/5" />
-                  <div className="h-2 bg-[#ff6250]/30 rounded-full w-3/5" />
-                </div>
-              </div>
-
-              {/* Floating badges */}
-              <div className="absolute top-12 right-8 px-4 py-2 bg-[#3b3b3b] rounded-full shadow-lg animate-float">
-                <span className="text-sm font-medium text-[#ff6250]">✨ AI-powered</span>
-              </div>
-              <div className="absolute bottom-20 left-4 px-4 py-2 bg-[#3b3b3b] rounded-full shadow-lg animate-float-delayed">
-                <span className="text-sm font-medium text-[#f7f7f7]/70">📄 Portable .md</span>
-              </div>
-            </div>
-          </div>
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+        <h1 className="text-5xl md:text-6xl font-bold text-[#37352f] mb-6 leading-tight tracking-tight">
+          Your personal context,
+          <br />
+          <span className="bg-gradient-to-r from-[#0077cc] via-[#9065b0] to-[#eb5757] bg-clip-text text-transparent">
+            everywhere you go
+          </span>
+        </h1>
+        <p className="text-xl text-[#37352f]/60 mb-10 max-w-2xl mx-auto leading-relaxed">
+          Nomi is the AI-powered way to create and maintain your digital identity.
+          Export it as a portable .md file that works with any AI product.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/signup"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
+          >
+            Get Nomi free
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
+          <a
+            href="#features"
+            className="inline-flex items-center justify-center px-6 py-3 text-[#37352f] font-medium rounded-md border border-[#e3e2de] hover:bg-[#f7f6f3] transition-colors"
+          >
+            See how it works
+          </a>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="relative z-10 py-24 bg-[#232323]">
-        <div className="max-w-[77.5em] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl md:text-5xl text-[#f7f7f7] mb-4">
-              How it works
-            </h2>
-            <p className="text-lg text-[#f7f7f7]/50 max-w-2xl mx-auto">
-              Three simple steps to create your digital identity
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                num: '01',
-                title: 'Chat with AI',
-                desc: 'Have a natural conversation. Nomi learns about your background, skills, goals, and personality.',
-                icon: (
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                ),
-              },
-              {
-                num: '02',
-                title: 'Get your .md file',
-                desc: 'Export your personal context as a portable Markdown file. Use it anywhere, with any AI.',
-                icon: (
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                ),
-              },
-              {
-                num: '03',
-                title: 'Connect (optional)',
-                desc: 'Enable matching to meet like-minded people who share your goals and values.',
-                icon: (
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                ),
-              },
-            ].map((step) => (
-              <div
-                key={step.num}
-                className="group relative p-8 bg-[#2b2b2b] rounded-2xl border border-[#f7f7f7]/5 hover:border-[#ff6250]/20 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,98,80,0.1)]"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-[#3b3b3b] flex items-center justify-center text-[#ff6250] group-hover:bg-[#ff6250] group-hover:text-white transition-all duration-500">
-                    {step.icon}
-                  </div>
-                  <span className="font-serif text-5xl text-[#f7f7f7]/5 group-hover:text-[#ff6250]/10 transition-colors duration-500">
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold text-[#f7f7f7] mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-[#f7f7f7]/50 leading-relaxed">
-                  {step.desc}
-                </p>
+      {/* Product Preview */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="bg-[#f7f6f3] rounded-2xl p-8 md:p-12 border border-[#e3e2de]">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#0f7b6c]/10 text-[#0f7b6c] rounded-full text-sm font-medium">
+                <span className="w-2 h-2 bg-[#0f7b6c] rounded-full"></span>
+                AI-powered
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="relative z-10 py-24">
-        <div className="max-w-[77.5em] mx-auto px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="font-serif text-4xl md:text-5xl text-[#f7f7f7] mb-6">
-                Your story,
-                <br />
-                <span className="text-[#ff6250]">always with you</span>
+              <h2 className="text-3xl font-bold text-[#37352f]">
+                Chat to build your profile
               </h2>
-              <p className="text-lg text-[#f7f7f7]/50 mb-8 leading-relaxed">
-                Unlike profiles locked in platforms, your Nomi file is truly yours. Export it, share it, use it with any AI assistant.
+              <p className="text-[#37352f]/60 leading-relaxed">
+                No forms to fill. Just have a conversation with Nomi and watch your personal context come to life.
               </p>
-
-              <div className="space-y-4">
-                {[
-                  'Portable across all AI products',
-                  'Update anytime through conversation',
-                  'Privacy-first: you control your data',
-                  'Match with like-minded people',
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#ff6250]/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-[#ff6250]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-[#f7f7f7]/70">{feature}</span>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            {/* Code preview */}
-            <div className="relative">
-              <div className="bg-[#1a1a1a] rounded-2xl p-6 font-mono text-sm shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                  <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#27ca40]" />
-                  <span className="ml-4 text-[#f7f7f7]/30">your-profile.md</span>
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-[#e3e2de]">
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#e3e2de]">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0077cc] to-[#9065b0] flex items-center justify-center">
+                  <span className="text-white font-medium">N</span>
                 </div>
-                <pre className="text-[#f7f7f7]/70 overflow-x-auto">
-{`# Sarah Chen
-
-> Product Designer at Figma
-
-## About
-- Location: San Francisco
-- Goals: Lead design systems
-
-## Skills
-\`UI Design\` \`Prototyping\` \`Design Systems\`
-
-## Looking For
-- Mentorship opportunities
-- Design community connections
-
----
-*Generated by Nomi*`}
-                </pre>
+                <div>
+                  <p className="font-medium text-[#37352f]">Nomi</p>
+                  <p className="text-sm text-[#37352f]/50">Your AI assistant</p>
+                </div>
               </div>
-
-              {/* Decorative element */}
-              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-[#ff6250]/10 rounded-full blur-[60px]" />
+              <div className="space-y-3">
+                <div className="bg-[#f7f6f3] rounded-lg p-3 text-sm text-[#37352f]/80">
+                  Tell me about yourself. What do you do?
+                </div>
+                <div className="bg-[#0077cc]/10 rounded-lg p-3 text-sm text-[#37352f]/80 ml-8">
+                  I'm a product designer at a startup...
+                </div>
+                <div className="bg-[#f7f6f3] rounded-lg p-3 text-sm text-[#37352f]/80">
+                  Great! What are you passionate about?
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-[#37352f] mb-4">
+            Everything you need
+          </h2>
+          <p className="text-[#37352f]/60 max-w-xl mx-auto">
+            Build, maintain, and share your personal context with powerful features.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Feature 1 - Blue */}
+          <div className="bg-[#0077cc]/5 rounded-xl p-6 border border-[#0077cc]/10 hover:border-[#0077cc]/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#0077cc]/10 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#0077cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">AI Conversations</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Natural chat interface to build and update your profile effortlessly.
+            </p>
+          </div>
+
+          {/* Feature 2 - Teal */}
+          <div className="bg-[#0f7b6c]/5 rounded-xl p-6 border border-[#0f7b6c]/10 hover:border-[#0f7b6c]/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#0f7b6c]/10 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#0f7b6c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">Export as .md</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Download your profile as a portable Markdown file anytime.
+            </p>
+          </div>
+
+          {/* Feature 3 - Purple */}
+          <div className="bg-[#9065b0]/5 rounded-xl p-6 border border-[#9065b0]/10 hover:border-[#9065b0]/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#9065b0]/10 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#9065b0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">Smart Matching</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Optionally connect with like-minded people based on your profile.
+            </p>
+          </div>
+
+          {/* Feature 4 - Orange */}
+          <div className="bg-[#eb5757]/5 rounded-xl p-6 border border-[#eb5757]/10 hover:border-[#eb5757]/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#eb5757]/10 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#eb5757]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">Privacy First</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Your data is yours. Control what you share and with whom.
+            </p>
+          </div>
+
+          {/* Feature 5 - Yellow */}
+          <div className="bg-[#f7c94b]/10 rounded-xl p-6 border border-[#f7c94b]/20 hover:border-[#f7c94b]/30 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#f7c94b]/20 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#9a7b00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">Always Updated</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Chat anytime to keep your profile fresh and relevant.
+            </p>
+          </div>
+
+          {/* Feature 6 - Blue */}
+          <div className="bg-[#0077cc]/5 rounded-xl p-6 border border-[#0077cc]/10 hover:border-[#0077cc]/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#0077cc]/10 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#0077cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-[#37352f] mb-2">Works Everywhere</h3>
+            <p className="text-sm text-[#37352f]/60">
+              Use your .md file with ChatGPT, Claude, or any AI assistant.
+            </p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="relative z-10 py-24">
-        <div className="max-w-[77.5em] mx-auto px-8">
-          <div className="relative bg-gradient-to-br from-[#3b3b3b] to-[#2b2b2b] rounded-3xl p-12 md:p-16 overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#ff6250]/10 rounded-full blur-[100px]" />
-
-            <div className="relative text-center max-w-2xl mx-auto">
-              <h2 className="font-serif text-4xl md:text-5xl text-[#f7f7f7] mb-6">
-                Ready to create your digital manual?
-              </h2>
-              <p className="text-lg text-[#f7f7f7]/50 mb-10">
-                Join Nomi and let AI help you tell your story. It only takes a few minutes.
-              </p>
-              <Link
-                href="/signup"
-                className="group inline-flex items-center gap-3 px-10 py-5 bg-[#ff6250] hover:bg-[#e2412e] text-white text-lg font-semibold rounded-full transition-all duration-500 shadow-[0_4px_12px_rgba(255,98,80,0.3)] hover:shadow-[0_8px_30px_rgba(255,98,80,0.5)]"
-              >
-                Get Started Free
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-          </div>
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="bg-[#37352f] rounded-2xl p-12 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Start building your digital identity
+          </h2>
+          <p className="text-white/60 mb-8 max-w-lg mx-auto">
+            Join thousands of people who use Nomi to maintain their personal context across AI products.
+          </p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-[#f7f6f3] text-[#37352f] font-medium rounded-md transition-colors"
+          >
+            Get Nomi free
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-[#f7f7f7]/5">
-        <div className="max-w-[77.5em] mx-auto px-8 py-8">
+      <footer className="border-t border-[#e3e2de]">
+        <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#ff6250] flex items-center justify-center">
-                <span className="text-white font-bold text-sm">N</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-[#37352f] flex items-center justify-center">
+                <span className="text-white font-bold text-xs">N</span>
               </div>
-              <span className="text-[#f7f7f7]/40 text-sm">getnomi.me</span>
+              <span className="text-[#37352f]/50 text-sm">getnomi.me</span>
             </div>
-            <p className="text-[#f7f7f7]/30 text-sm">
+            <p className="text-[#37352f]/40 text-sm">
               © 2024 Nomi. Your story, always with you.
             </p>
           </div>
