@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/auth/requireAuth';
 import { inngest } from '@/inngest/client';
-import { z } from 'zod';
+import { matchActionSchema } from '@/lib/schemas';
 
 /**
  * GET /api/match - Get current user's matches
  */
 export async function GET(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse query params
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -52,10 +45,10 @@ export async function GET(request: NextRequest) {
       query = query.eq('intent', intent);
     }
 
-    const { data: matches, error, count } = await query;
+    const { data: matches, error: fetchError, count } = await query;
 
-    if (error) {
-      console.error('Error fetching matches:', error);
+    if (fetchError) {
+      console.error('Error fetching matches:', fetchError);
       return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 });
     }
 
@@ -83,28 +76,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Schema for match actions
-const matchActionSchema = z.object({
-  match_id: z.string().uuid(),
-  action: z.enum(['approve', 'reject']),
-});
-
 /**
  * POST /api/match - Approve or reject a match
  */
 export async function POST(request: NextRequest) {
+  const { user, supabase, error } = await requireAuth();
+  if (error) return error;
+
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse and validate body
     const body = await request.json();
     const validation = matchActionSchema.safeParse(body);
