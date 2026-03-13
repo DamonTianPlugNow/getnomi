@@ -30,7 +30,6 @@ interface ProfileData {
     intent: RelationshipIntent;
     summary: string;
     talking_points: string[];
-    status: string;
   }>;
 }
 
@@ -84,7 +83,7 @@ export default function ProfilePage() {
         .select(`
           *,
           memory_profile:memory_profiles(*),
-          agent_profiles(id, intent, summary, talking_points, status)
+          agent_profiles(id, intent, summary, talking_points)
         `)
         .eq('id', user.id)
         .single();

@@ -15,15 +15,15 @@ export const workExperienceSchema = z.object({
 
 export const createProfileSchema = z.object({
   display_name: z.string().min(1).max(100),
-  headline: z.string().max(200).optional(),
-  location: z.string().max(100).optional(),
-  work_experience: z.array(workExperienceSchema).optional(),
-  skills: z.array(z.string()).max(20).optional(),
-  can_offer: z.array(z.string()).max(10).optional(),
-  looking_for: z.array(z.string()).max(10).optional(),
-  current_goals: z.array(z.string()).max(5).optional(),
-  interests: z.array(z.string()).max(20).optional(),
-  values: z.array(z.string()).max(10).optional(),
+  headline: z.string().max(200).optional().or(z.literal('')),
+  location: z.string().max(100).optional().or(z.literal('')),
+  work_experience: z.array(workExperienceSchema).optional().default([]),
+  skills: z.array(z.string()).max(20).optional().default([]),
+  can_offer: z.array(z.string()).max(10).optional().default([]),
+  looking_for: z.array(z.string()).max(10).optional().default([]),
+  current_goals: z.array(z.string()).max(5).optional().default([]),
+  interests: z.array(z.string()).max(20).optional().default([]),
+  values: z.array(z.string()).max(10).optional().default([]),
   intents: z.array(z.enum(['professional', 'dating', 'friendship'])).min(1),
 });
 
