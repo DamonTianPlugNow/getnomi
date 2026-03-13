@@ -1,6 +1,15 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+
+/**
+ * Check if email service is configured
+ */
+function isEmailConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY;
+}
 
 interface SendEmailOptions {
   to: string;
@@ -11,9 +20,23 @@ interface SendEmailOptions {
 
 /**
  * Send an email using Resend
+ * Logs to console in development when Resend is not configured
  */
 export async function sendEmail(options: SendEmailOptions): Promise<{ id: string }> {
   const { to, subject, html, from = 'A2A Platform <noreply@a2a.app>' } = options;
+
+  // Graceful degradation: log email when Resend is not configured
+  if (!isEmailConfigured() || !resend) {
+    console.warn('[Email] Resend API key not configured - logging email instead');
+    console.log('─'.repeat(60));
+    console.log(`📧 Email (not sent)`);
+    console.log(`   To: ${to}`);
+    console.log(`   From: ${from}`);
+    console.log(`   Subject: ${subject}`);
+    console.log(`   Body: ${html.replace(/<[^>]*>/g, ' ').substring(0, 200)}...`);
+    console.log('─'.repeat(60));
+    return { id: `mock-${Date.now()}` };
+  }
 
   try {
     const { data, error } = await resend.emails.send({
