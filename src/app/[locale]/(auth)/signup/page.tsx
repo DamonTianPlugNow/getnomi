@@ -25,7 +25,7 @@ export default function SignUpPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'linkedin_oidc',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding&locale=${locale}`,
       },
     });
   };
@@ -34,7 +34,7 @@ export default function SignUpPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding&locale=${locale}`,
       },
     });
   };

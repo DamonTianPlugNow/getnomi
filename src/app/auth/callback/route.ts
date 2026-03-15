@@ -7,12 +7,13 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const redirectPath = searchParams.get('redirect') || '/dashboard';
+  const localeParam = searchParams.get('locale');
 
   const cookieStore = await cookies();
 
-  // Get locale from cookie or default to 'en'
+  // Get locale from URL param first, then cookie, then default to 'en'
   const localeCookie = cookieStore.get('NEXT_LOCALE');
-  const locale = localeCookie?.value || 'en';
+  const locale = localeParam || localeCookie?.value || 'en';
   const redirect = `/${locale}${redirectPath}`;
 
   console.log('Auth callback:', { code: !!code, redirectPath, locale, redirect });

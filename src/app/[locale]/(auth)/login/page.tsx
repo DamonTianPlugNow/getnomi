@@ -27,7 +27,7 @@ function LoginContent() {
     await supabase.auth.signInWithOAuth({
       provider: 'linkedin_oidc',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}&locale=${locale}`,
       },
     });
   };
@@ -36,7 +36,7 @@ function LoginContent() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}&locale=${locale}`,
       },
     });
   };

@@ -23,6 +23,8 @@ export default function LanguageSwitcher() {
   }, []);
 
   const switchLocale = (newLocale: Locale) => {
+    // Set cookie for OAuth callback and other server-side uses
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
     // Replace the locale in the pathname
     const segments = pathname.split('/');
     segments[1] = newLocale;
