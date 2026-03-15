@@ -6,11 +6,17 @@ import { createServerClient } from '@supabase/ssr';
 const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  // First, handle i18n routing
+  const pathname = request.nextUrl.pathname;
+
+  // Skip i18n middleware for auth callback routes (OAuth redirects)
+  if (pathname.startsWith('/auth/')) {
+    return NextResponse.next();
+  }
+
+  // Handle i18n routing
   const intlResponse = intlMiddleware(request);
 
   // Get the pathname without locale prefix for checking protected routes
-  const pathname = request.nextUrl.pathname;
   const localePattern = /^\/(en|zh|ja|ko)(\/|$)/;
   const pathnameWithoutLocale = pathname.replace(localePattern, '/');
 
