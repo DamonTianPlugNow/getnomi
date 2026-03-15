@@ -8,8 +8,8 @@ const intlMiddleware = createIntlMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Skip i18n middleware for auth callback routes (OAuth redirects)
-  if (pathname.startsWith('/auth/')) {
+  // Skip i18n middleware for API and auth routes
+  if (pathname.startsWith('/api/') || pathname.startsWith('/auth/')) {
     return NextResponse.next();
   }
 
@@ -20,10 +20,9 @@ export async function middleware(request: NextRequest) {
   const localePattern = /^\/(en|zh|ja|ko)(\/|$)/;
   const pathnameWithoutLocale = pathname.replace(localePattern, '/');
 
-  // Skip Supabase session check for static files and API routes
+  // Skip Supabase session check for static files
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
     pathname.includes('.')
   ) {
     return intlResponse;
