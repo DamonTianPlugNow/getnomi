@@ -1,0 +1,262 @@
+{
+  "common": {
+    "login": "Log in",
+    "signup": "Get Nomi free",
+    "logout": "Log out",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close"
+  },
+  "nav": {
+    "matches": "Matches",
+    "meetings": "Meetings",
+    "profile": "Profile",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "hero": {
+      "title": "Your personal context,",
+      "titleHighlight": "everywhere you go",
+      "description": "Nomi is the AI-powered way to create and maintain your digital identity. Export it as a portable .md file that works with any AI product."
+    },
+    "cta": {
+      "getStarted": "Get Nomi free",
+      "howItWorks": "See how it works"
+    },
+    "preview": {
+      "title": "Your story, structured",
+      "description": "Nomi creates a comprehensive personal context through natural conversation. Export it anytime as a clean .md file.",
+      "features": {
+        "skills": "Skills & expertise",
+        "goals": "Current goals",
+        "values": "Values & interests",
+        "connections": "Connection preferences"
+      }
+    },
+    "features": {
+      "title": "Everything you need",
+      "chat": {
+        "title": "Natural conversation",
+        "description": "No forms to fill. Just chat with Nomi and your profile builds itself."
+      },
+      "export": {
+        "title": "Portable .md export",
+        "description": "Download your profile as a Markdown file. Use it with ChatGPT, Claude, or any AI."
+      },
+      "match": {
+        "title": "Smart matching",
+        "description": "Optionally connect with people who share your goals and values."
+      },
+      "privacy": {
+        "title": "Privacy first",
+        "description": "Your data stays yours. Export, delete, or modify anytime."
+      },
+      "ai": {
+        "title": "AI-powered insights",
+        "description": "Nomi helps you articulate what makes you unique."
+      },
+      "update": {
+        "title": "Always current",
+        "description": "Update your profile through conversation as you grow and change."
+      }
+    },
+    "finalCta": {
+      "title": "Ready to create your digital identity?",
+      "description": "Join thousands of people who use Nomi to maintain their personal context."
+    },
+    "footer": {
+      "tagline": "Your story, always with you."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue to your profile",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithLinkedIn": "Continue with LinkedIn",
+      "continueWithEmail": "Continue with email",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "signingIn": "Signing in...",
+      "signIn": "Sign in",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Start building your digital identity",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithLinkedIn": "Continue with LinkedIn",
+      "continueWithEmail": "Continue with email",
+      "namePlaceholder": "Full name",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password (min 6 characters)",
+      "creatingAccount": "Creating account...",
+      "createAccount": "Create account",
+      "hasAccount": "Already have an account?",
+      "benefits": {
+        "title": "What you get:",
+        "aiContext": "AI-powered personal context",
+        "export": "Portable .md file export",
+        "matching": "Smart matching with others"
+      },
+      "terms": "By signing up, you agree to our Terms of Service and Privacy Policy."
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {firstName}!",
+    "completeProfile": {
+      "title": "Complete your profile",
+      "description": "Chat with Nomi to create your personal context. It only takes a few minutes.",
+      "cta": "Start conversation"
+    },
+    "generating": {
+      "title": "Generating your AI agent...",
+      "description": "We're creating your personalized agent profiles. This usually takes about 30 seconds."
+    },
+    "matchingOff": {
+      "title": "Matching is off",
+      "description": "Turn on matching in your profile to start connecting with others.",
+      "cta": "Go to profile"
+    },
+    "matchingOn": {
+      "title": "Your AI agents are working",
+      "description": "They're finding meaningful connections based on your profile.",
+      "cta": "View matches"
+    },
+    "stats": {
+      "activeAgents": "Active Agents",
+      "pendingMatches": "Pending Matches",
+      "upcomingMeetings": "Upcoming Meetings"
+    },
+    "recentMatches": {
+      "title": "Recent Matches",
+      "viewAll": "View all",
+      "empty": "No matches yet. Your AI agents are searching!",
+      "status": {
+        "pending": "Pending",
+        "waiting": "Waiting",
+        "actionNeeded": "Action needed",
+        "new": "New"
+      }
+    },
+    "upcomingMeetings": {
+      "title": "Upcoming Meetings",
+      "viewAll": "View all",
+      "empty": "No upcoming meetings",
+      "join": "Join"
+    },
+    "aiAgents": {
+      "title": "Your AI Agents",
+      "professional": "💼 Professional",
+      "dating": "💕 Dating",
+      "friendship": "🤝 Friendship"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "updateWithAI": "Update with AI",
+    "exportMd": "Export .md",
+    "matching": "Matching",
+    "on": "On",
+    "off": "Off",
+    "sections": {
+      "skills": "Skills",
+      "interests": "Interests",
+      "currentGoals": "Current Goals",
+      "values": "Values",
+      "canOffer": "What I Can Offer",
+      "lookingFor": "Looking For",
+      "openToConnect": "Open to Connect"
+    },
+    "intents": {
+      "professional": "💼 Professional",
+      "dating": "💕 Dating",
+      "friendship": "🤝 Friendship"
+    }
+  },
+  "matches": {
+    "title": "Your Matches",
+    "tabs": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "past": "Past"
+    },
+    "status": {
+      "matched": "Matched",
+      "waiting": "Waiting",
+      "actionNeeded": "Action needed",
+      "new": "New",
+      "declined": "Declined",
+      "expired": "Expired",
+      "meetingScheduled": "Meeting scheduled"
+    },
+    "empty": "No matches yet"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "subtitle": "Your scheduled and past meetings",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "noShow": "No Show",
+      "cancelled": "Cancelled",
+      "needsFeedback": "Needs feedback"
+    },
+    "join": "Join",
+    "giveFeedback": "Give feedback",
+    "empty": "No meetings yet"
+  },
+  "onboarding": {
+    "greeting": "Hey {name}! I'm Nomi, your AI assistant 👋",
+    "greetingNoName": "Hey there! I'm Nomi, your AI assistant 👋",
+    "introWithName": "I see you've signed in. Let's build your personal profile through a quick chat so we can find the right connections for you.\n\n**What do you do, and where are you based?**",
+    "introNoName": "I'll help you create your personal profile through a simple conversation. This will help us find meaningful connections for you.\n\n**Let's start simple — what's your name and what do you do?**",
+    "suggestions": {
+      "designer": "I'm a product designer",
+      "cofounder": "Looking for co-founders",
+      "friends": "I want to make friends",
+      "location": "Based in San Francisco"
+    },
+    "progress": {
+      "title": "Profile Progress",
+      "name": "Name",
+      "role": "Role",
+      "location": "Location",
+      "experience": "Experience",
+      "skills": "Skills",
+      "canOffer": "Can offer",
+      "lookingFor": "Looking for",
+      "goals": "Goals",
+      "interests": "Interests",
+      "values": "Values",
+      "connectionType": "Connection type"
+    },
+    "error": "Sorry, something went wrong. Please try again.",
+    "profileError": "There was an issue creating your profile. Please try again.",
+    "placeholder": "Type your message...",
+    "placeholderCreating": "Creating your profile...",
+    "send": "Send"
+  },
+  "chat": {
+    "welcomeBack": "Welcome back! I'm Nomi, your AI assistant 👋",
+    "updateIntro": "I can see your current profile. What would you like to update or add? You can tell me about:\n\n- New skills or experiences\n- Updated goals\n- Changes in what you're looking for\n- Anything else about yourself",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "error": "Sorry, something went wrong. Please try again.",
+    "saveError": "Failed to save changes. Please try again."
+  },
+  "metadata": {
+    "title": "Nomi - Your Digital World Manual",
+    "description": "Create your AI-powered personal context that works everywhere. Your story, always with you."
+  }
+}

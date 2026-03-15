@@ -21,6 +21,7 @@
     "inngest": "^3.52.6",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
+    "next-intl": "^4.8.3",
     "openai": "^6.27.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",

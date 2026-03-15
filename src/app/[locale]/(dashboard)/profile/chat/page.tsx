@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { ChatMessage, OnboardingProfileData } from '@/types';
 
 const STORAGE_KEY = 'nomi_profile_chat_state';
@@ -30,6 +31,7 @@ function TypingIndicator() {
 
 export default function ProfileChatPage() {
   const router = useRouter();
+  const t = useTranslations('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [profileData, setProfileData] = useState<Partial<OnboardingProfileData>>({});
   const [input, setInput] = useState('');
@@ -77,20 +79,13 @@ export default function ProfileChatPage() {
       setProfileData(profile);
       setMessages([{
         role: 'assistant',
-        content: `Welcome back! I'm Nomi, your AI assistant 👋
-
-I can help you update your profile. What would you like to change? For example:
-- New job or role
-- Updated skills or interests
-- Changed goals
-- Or just tell me what's new in your life
-
-**What would you like to update?**`,
+        content: `${t('welcomeBack')}\n\n${t('updateIntro')}`,
       }]);
       setInitialized(true);
     };
 
     init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   useEffect(() => {
@@ -152,12 +147,12 @@ I can help you update your profile. What would you like to change? For example:
       }
     } catch (err) {
       setIsTyping(false);
-      setError('Failed to send message. Please try again.');
+      setError(t('error'));
       console.error('Chat error:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [messages, profileData, isLoading, router]);
+  }, [messages, profileData, isLoading, router, t]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +176,7 @@ I can help you update your profile. What would you like to change? For example:
       localStorage.removeItem(STORAGE_KEY);
       router.push('/profile');
     } catch {
-      setError('Failed to save');
+      setError(t('saveError'));
     }
   };
 
@@ -270,7 +265,7 @@ I can help you update your profile. What would you like to change? For example:
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
+              placeholder={t('placeholder')}
               rows={1}
               className="flex-1 px-4 py-3 border border-[#e3e2de] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] resize-none text-[#37352f] placeholder:text-[#37352f]/40"
             />
@@ -282,7 +277,7 @@ I can help you update your profile. What would you like to change? For example:
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                'Send'
+                t('send')
               )}
             </button>
           </div>

@@ -1,16 +1,24 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(`/${locale}/login`);
   }
 
   // Fetch user profile
@@ -58,7 +66,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#e3e2de]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
               <span className="text-white font-bold text-sm">N</span>
             </div>
@@ -66,10 +74,11 @@ export default async function DashboardPage() {
           </Link>
 
           <nav className="flex items-center gap-1">
+            <LanguageSwitcher />
             {[
-              { href: '/matches', label: 'Matches' },
-              { href: '/meetings', label: 'Meetings' },
-              { href: '/profile', label: 'Profile' },
+              { href: `/${locale}/matches`, label: t('nav.matches') },
+              { href: `/${locale}/meetings`, label: t('nav.meetings') },
+              { href: `/${locale}/profile`, label: t('nav.profile') },
             ].map((item) => (
               <Link
                 key={item.href}
@@ -85,7 +94,7 @@ export default async function DashboardPage() {
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-[#37352f]/40 hover:text-[#eb5757] hover:bg-[#eb5757]/5 rounded-md transition-colors"
               >
-                Sign out
+                {t('common.logout')}
               </button>
             </form>
           </nav>
@@ -96,25 +105,25 @@ export default async function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-[#37352f] mb-2">
-            Welcome back, {firstName}
+            {t('dashboard.welcome', { firstName })}
           </h1>
           <p className="text-[#37352f]/60">
-            Your AI agents are working to find meaningful connections for you.
+            {t('dashboard.matchingOn.description')}
           </p>
         </div>
 
         {/* Status Cards */}
         {!hasProfile && (
           <div className="mb-8 p-6 bg-[#0077cc]/5 rounded-xl border border-[#0077cc]/10">
-            <h2 className="text-xl font-semibold text-[#37352f] mb-2">Complete your profile</h2>
+            <h2 className="text-xl font-semibold text-[#37352f] mb-2">{t('dashboard.completeProfile.title')}</h2>
             <p className="text-[#37352f]/60 mb-4">
-              Create your memory profile to start matching with people who share your goals and values.
+              {t('dashboard.completeProfile.description')}
             </p>
             <Link
-              href="/onboarding"
+              href={`/${locale}/onboarding`}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
-              Get Started
+              {t('dashboard.completeProfile.cta')}
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -129,9 +138,9 @@ export default async function DashboardPage() {
                 <div className="w-5 h-5 border-2 border-[#f7c94b] border-t-transparent rounded-full animate-spin" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-[#37352f]">Generating your AI agent...</h2>
+                <h2 className="text-lg font-semibold text-[#37352f]">{t('dashboard.generating.title')}</h2>
                 <p className="text-[#37352f]/60 text-sm">
-                  We're creating your personalized agent profile. This usually takes a minute.
+                  {t('dashboard.generating.description')}
                 </p>
               </div>
             </div>
@@ -142,10 +151,10 @@ export default async function DashboardPage() {
         {hasProfile && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             {[
-              { value: profile?.agent_profiles?.length || 0, label: 'Active Agents', color: 'blue', href: '/profile' },
-              { value: matches?.length || 0, label: 'Pending Matches', color: 'teal', href: '/matches' },
-              { value: meetings?.length || 0, label: 'Upcoming Meetings', color: 'orange', href: '/meetings' },
-              { value: profile?.intents?.length || 0, label: 'Relationship Types', color: 'purple', href: '/profile' },
+              { value: profile?.agent_profiles?.length || 0, label: t('dashboard.stats.activeAgents'), color: 'blue', href: `/${locale}/profile` },
+              { value: matches?.length || 0, label: t('dashboard.stats.pendingMatches'), color: 'teal', href: `/${locale}/matches` },
+              { value: meetings?.length || 0, label: t('dashboard.stats.upcomingMeetings'), color: 'orange', href: `/${locale}/meetings` },
+              { value: profile?.intents?.length || 0, label: 'Relationship Types', color: 'purple', href: `/${locale}/profile` },
             ].map((stat, i) => {
               const colors: Record<string, string> = {
                 blue: 'bg-[#0077cc]/5 border-[#0077cc]/10 hover:border-[#0077cc]/20',
@@ -172,9 +181,9 @@ export default async function DashboardPage() {
           {/* Recent Matches */}
           <div className="bg-[#f7f6f3] rounded-xl p-6 border border-[#e3e2de]">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-semibold text-[#37352f]">Recent Matches</h2>
-              <Link href="/matches" className="text-sm text-[#0077cc] hover:underline">
-                View all →
+              <h2 className="text-lg font-semibold text-[#37352f]">{t('dashboard.recentMatches.title')}</h2>
+              <Link href={`/${locale}/matches`} className="text-sm text-[#0077cc] hover:underline">
+                {t('dashboard.recentMatches.viewAll')} →
               </Link>
             </div>
 
@@ -185,8 +194,7 @@ export default async function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <p className="text-[#37352f]/60 mb-1">No matches yet</p>
-                <p className="text-sm text-[#37352f]/40">We're looking for your perfect matches!</p>
+                <p className="text-[#37352f]/60 mb-1">{t('dashboard.recentMatches.empty')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -196,7 +204,7 @@ export default async function DashboardPage() {
                   return (
                     <Link
                       key={match.id}
-                      href={`/matches/${match.id}`}
+                      href={`/${locale}/matches/${match.id}`}
                       className="flex items-center gap-4 p-4 bg-white rounded-lg border border-[#e3e2de] hover:border-[#0077cc]/30 transition-colors"
                     >
                       <div className="relative">
@@ -239,9 +247,9 @@ export default async function DashboardPage() {
           {/* Upcoming Meetings */}
           <div className="bg-[#f7f6f3] rounded-xl p-6 border border-[#e3e2de]">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-semibold text-[#37352f]">Upcoming Meetings</h2>
-              <Link href="/meetings" className="text-sm text-[#0077cc] hover:underline">
-                View all →
+              <h2 className="text-lg font-semibold text-[#37352f]">{t('dashboard.upcomingMeetings.title')}</h2>
+              <Link href={`/${locale}/meetings`} className="text-sm text-[#0077cc] hover:underline">
+                {t('dashboard.upcomingMeetings.viewAll')} →
               </Link>
             </div>
 
@@ -252,8 +260,7 @@ export default async function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className="text-[#37352f]/60 mb-1">No upcoming meetings</p>
-                <p className="text-sm text-[#37352f]/40">Confirm a match to schedule a meeting</p>
+                <p className="text-[#37352f]/60 mb-1">{t('dashboard.upcomingMeetings.empty')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -263,12 +270,12 @@ export default async function DashboardPage() {
                   return (
                     <Link
                       key={meeting.id}
-                      href={`/meetings/${meeting.id}`}
+                      href={`/${locale}/meetings/${meeting.id}`}
                       className="flex items-center gap-4 p-4 bg-white rounded-lg border border-[#e3e2de] hover:border-[#0f7b6c]/30 transition-colors"
                     >
                       <div className="w-12 h-12 rounded-lg bg-[#0f7b6c]/10 flex flex-col items-center justify-center">
                         <span className="text-xs text-[#0f7b6c] font-medium uppercase">
-                          {meetingDate.toLocaleDateString('en-US', { month: 'short' })}
+                          {meetingDate.toLocaleDateString(locale, { month: 'short' })}
                         </span>
                         <span className="text-lg font-bold text-[#37352f]">
                           {meetingDate.getDate()}
@@ -279,7 +286,7 @@ export default async function DashboardPage() {
                           Meeting with {otherUser?.name || 'Anonymous'}
                         </p>
                         <p className="text-sm text-[#37352f]/50">
-                          {meetingDate.toLocaleTimeString('en-US', {
+                          {meetingDate.toLocaleTimeString(locale, {
                             hour: 'numeric',
                             minute: '2-digit',
                             hour12: true
@@ -300,7 +307,7 @@ export default async function DashboardPage() {
         {/* Agent Profiles Section */}
         {hasProfile && isProfileActive && profile?.agent_profiles && profile.agent_profiles.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-lg font-semibold text-[#37352f] mb-5">Your AI Agents</h2>
+            <h2 className="text-lg font-semibold text-[#37352f] mb-5">{t('dashboard.aiAgents.title')}</h2>
             <div className="grid md:grid-cols-3 gap-4">
               {profile.agent_profiles.map((agent: { id: string; intent: string; summary: string }) => {
                 const colors: Record<string, { bg: string; text: string; badge: string }> = {
@@ -315,8 +322,7 @@ export default async function DashboardPage() {
                     className={`p-5 rounded-xl border border-[#e3e2de] ${color.bg}`}
                   >
                     <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mb-3 ${color.badge} ${color.text}`}>
-                      {agent.intent === 'professional' ? '💼 Professional' :
-                       agent.intent === 'dating' ? '💕 Dating' : '🤝 Friendship'}
+                      {t(`dashboard.aiAgents.${agent.intent}`)}
                     </span>
                     <p className="text-sm text-[#37352f]/70 line-clamp-3">
                       {agent.summary}

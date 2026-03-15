@@ -1,0 +1,262 @@
+{
+  "common": {
+    "login": "登录",
+    "signup": "免费注册",
+    "logout": "退出登录",
+    "loading": "加载中...",
+    "error": "出错了",
+    "save": "保存",
+    "cancel": "取消",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "提交",
+    "close": "关闭"
+  },
+  "nav": {
+    "matches": "匹配",
+    "meetings": "会议",
+    "profile": "个人资料",
+    "dashboard": "仪表盘"
+  },
+  "home": {
+    "hero": {
+      "title": "你的个人档案，",
+      "titleHighlight": "随处可用",
+      "description": "Nomi 是一种 AI 驱动的方式，帮助你创建和维护数字身份。导出为便携的 .md 文件，可与任何 AI 产品配合使用。"
+    },
+    "cta": {
+      "getStarted": "免费注册",
+      "howItWorks": "了解更多"
+    },
+    "preview": {
+      "title": "你的故事，结构化呈现",
+      "description": "Nomi 通过自然对话创建全面的个人档案。随时导出为简洁的 .md 文件。",
+      "features": {
+        "skills": "技能与专长",
+        "goals": "当前目标",
+        "values": "价值观与兴趣",
+        "connections": "社交偏好"
+      }
+    },
+    "features": {
+      "title": "你需要的一切",
+      "chat": {
+        "title": "自然对话",
+        "description": "无需填写表单。只需与 Nomi 聊天，你的档案就会自动生成。"
+      },
+      "export": {
+        "title": "便携 .md 导出",
+        "description": "将你的档案下载为 Markdown 文件。可与 ChatGPT、Claude 或任何 AI 配合使用。"
+      },
+      "match": {
+        "title": "智能匹配",
+        "description": "可选择与志同道合的人建立联系。"
+      },
+      "privacy": {
+        "title": "隐私优先",
+        "description": "你的数据归你所有。随时导出、删除或修改。"
+      },
+      "ai": {
+        "title": "AI 驱动洞察",
+        "description": "Nomi 帮助你表达自己的独特之处。"
+      },
+      "update": {
+        "title": "始终保持最新",
+        "description": "随着你的成长和变化，通过对话更新你的档案。"
+      }
+    },
+    "finalCta": {
+      "title": "准备好创建你的数字身份了吗？",
+      "description": "加入数千名使用 Nomi 维护个人档案的用户。"
+    },
+    "footer": {
+      "tagline": "你的故事，始终与你同在。"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "登录以继续访问你的档案",
+      "continueWithGoogle": "使用 Google 继续",
+      "continueWithLinkedIn": "使用 LinkedIn 继续",
+      "continueWithEmail": "使用邮箱继续",
+      "emailPlaceholder": "邮箱",
+      "passwordPlaceholder": "密码",
+      "signingIn": "登录中...",
+      "signIn": "登录",
+      "noAccount": "还没有账户？",
+      "signUp": "注册"
+    },
+    "signup": {
+      "title": "创建账户",
+      "subtitle": "开始构建你的数字身份",
+      "continueWithGoogle": "使用 Google 继续",
+      "continueWithLinkedIn": "使用 LinkedIn 继续",
+      "continueWithEmail": "使用邮箱继续",
+      "namePlaceholder": "姓名",
+      "emailPlaceholder": "邮箱",
+      "passwordPlaceholder": "密码（至少6位）",
+      "creatingAccount": "创建中...",
+      "createAccount": "创建账户",
+      "hasAccount": "已有账户？",
+      "benefits": {
+        "title": "你将获得：",
+        "aiContext": "AI 驱动的个人档案",
+        "export": "便携 .md 文件导出",
+        "matching": "智能匹配他人"
+      },
+      "terms": "注册即表示你同意我们的服务条款和隐私政策。"
+    }
+  },
+  "dashboard": {
+    "welcome": "欢迎回来，{firstName}！",
+    "completeProfile": {
+      "title": "完善你的档案",
+      "description": "与 Nomi 聊天来创建你的个人档案。只需几分钟。",
+      "cta": "开始对话"
+    },
+    "generating": {
+      "title": "正在生成你的 AI 代理...",
+      "description": "我们正在创建你的个性化代理档案。通常需要约30秒。"
+    },
+    "matchingOff": {
+      "title": "匹配功能已关闭",
+      "description": "在个人资料中开启匹配功能，开始与他人建立联系。",
+      "cta": "前往个人资料"
+    },
+    "matchingOn": {
+      "title": "你的 AI 代理正在工作",
+      "description": "它们正在根据你的档案寻找有意义的联系。",
+      "cta": "查看匹配"
+    },
+    "stats": {
+      "activeAgents": "活跃代理",
+      "pendingMatches": "待处理匹配",
+      "upcomingMeetings": "即将到来的会议"
+    },
+    "recentMatches": {
+      "title": "最近匹配",
+      "viewAll": "查看全部",
+      "empty": "暂无匹配。你的 AI 代理正在搜索中！",
+      "status": {
+        "pending": "待处理",
+        "waiting": "等待中",
+        "actionNeeded": "需要操作",
+        "new": "新"
+      }
+    },
+    "upcomingMeetings": {
+      "title": "即将到来的会议",
+      "viewAll": "查看全部",
+      "empty": "暂无即将到来的会议",
+      "join": "加入"
+    },
+    "aiAgents": {
+      "title": "你的 AI 代理",
+      "professional": "💼 职业",
+      "dating": "💕 约会",
+      "friendship": "🤝 友谊"
+    }
+  },
+  "profile": {
+    "title": "个人资料",
+    "updateWithAI": "AI 更新",
+    "exportMd": "导出 .md",
+    "matching": "匹配",
+    "on": "开启",
+    "off": "关闭",
+    "sections": {
+      "skills": "技能",
+      "interests": "兴趣",
+      "currentGoals": "当前目标",
+      "values": "价值观",
+      "canOffer": "我能提供的",
+      "lookingFor": "我在寻找的",
+      "openToConnect": "开放连接"
+    },
+    "intents": {
+      "professional": "💼 职业",
+      "dating": "💕 约会",
+      "friendship": "🤝 友谊"
+    }
+  },
+  "matches": {
+    "title": "你的匹配",
+    "tabs": {
+      "pending": "待处理",
+      "confirmed": "已确认",
+      "past": "历史"
+    },
+    "status": {
+      "matched": "已匹配",
+      "waiting": "等待中",
+      "actionNeeded": "需要操作",
+      "new": "新",
+      "declined": "已拒绝",
+      "expired": "已过期",
+      "meetingScheduled": "会议已安排"
+    },
+    "empty": "暂无匹配"
+  },
+  "meetings": {
+    "title": "会议",
+    "subtitle": "你的已安排和历史会议",
+    "tabs": {
+      "upcoming": "即将到来",
+      "past": "历史"
+    },
+    "status": {
+      "scheduled": "已安排",
+      "completed": "已完成",
+      "noShow": "未出席",
+      "cancelled": "已取消",
+      "needsFeedback": "需要反馈"
+    },
+    "join": "加入",
+    "giveFeedback": "提供反馈",
+    "empty": "暂无会议"
+  },
+  "onboarding": {
+    "greeting": "嗨 {name}！我是 Nomi，你的 AI 助手 👋",
+    "greetingNoName": "嗨！我是 Nomi，你的 AI 助手 👋",
+    "introWithName": "我看到你已经登录了。让我们通过简短的对话来创建你的个人档案，以便为你找到合适的联系人。\n\n**你是做什么的，在哪里？**",
+    "introNoName": "我会通过简单的对话帮助你创建个人档案。这将帮助我们为你找到有意义的联系。\n\n**让我们从简单的开始——你叫什么名字，做什么工作？**",
+    "suggestions": {
+      "designer": "我是产品设计师",
+      "cofounder": "寻找联合创始人",
+      "friends": "我想交朋友",
+      "location": "在旧金山"
+    },
+    "progress": {
+      "title": "档案进度",
+      "name": "姓名",
+      "role": "角色",
+      "location": "位置",
+      "experience": "经验",
+      "skills": "技能",
+      "canOffer": "能提供",
+      "lookingFor": "寻找",
+      "goals": "目标",
+      "interests": "兴趣",
+      "values": "价值观",
+      "connectionType": "连接类型"
+    },
+    "error": "抱歉，出错了。请重试。",
+    "profileError": "创建档案时出现问题。请重试。",
+    "placeholder": "输入消息...",
+    "placeholderCreating": "正在创建你的档案...",
+    "send": "发送"
+  },
+  "chat": {
+    "welcomeBack": "欢迎回来！我是 Nomi，你的 AI 助手 👋",
+    "updateIntro": "我可以看到你当前的档案。你想更新或添加什么？你可以告诉我：\n\n- 新技能或经验\n- 更新的目标\n- 你正在寻找的变化\n- 关于你自己的任何其他事情",
+    "placeholder": "输入消息...",
+    "send": "发送",
+    "error": "抱歉，出错了。请重试。",
+    "saveError": "保存失败。请重试。"
+  },
+  "metadata": {
+    "title": "Nomi - 你的数字世界手册",
+    "description": "创建你的 AI 驱动的个人档案，随处可用。你的故事，始终与你同在。"
+  }
+}

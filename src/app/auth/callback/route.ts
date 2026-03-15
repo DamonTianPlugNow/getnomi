@@ -6,11 +6,18 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const redirect = searchParams.get('redirect') || '/dashboard';
+  const redirectPath = searchParams.get('redirect') || '/dashboard';
+
+  const cookieStore = await cookies();
+
+  // Get locale from cookie or default to 'en'
+  const localeCookie = cookieStore.get('NEXT_LOCALE');
+  const locale = localeCookie?.value || 'en';
+  const redirect = `/${locale}${redirectPath}`;
+
+  console.log('Auth callback:', { code: !!code, redirectPath, locale, redirect });
 
   if (code) {
-    const cookieStore = await cookies();
-
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,6 +36,8 @@ export async function GET(request: NextRequest) {
     );
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    console.log('Auth exchange result:', { hasUser: !!data?.user, error: error?.message });
 
     if (!error && data.user) {
       // Save OAuth provider data to users table
@@ -67,7 +76,6 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id);
 
           if (updateError) {
-            // Log error but don't block login (Issue 6)
             console.error(JSON.stringify({
               timestamp: new Date().toISOString(),
               service: 'auth',
@@ -78,7 +86,6 @@ export async function GET(request: NextRequest) {
             }));
           }
         } catch (err) {
-          // Log error but don't block login
           console.error(JSON.stringify({
             timestamp: new Date().toISOString(),
             service: 'auth',
@@ -90,10 +97,12 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      console.log('Redirecting to:', `${origin}${redirect}`);
       return NextResponse.redirect(`${origin}${redirect}`);
     }
   }
 
   // Return to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  console.log('Auth failed, redirecting to login');
+  return NextResponse.redirect(`${origin}/${locale}/login?error=auth_failed`);
 }

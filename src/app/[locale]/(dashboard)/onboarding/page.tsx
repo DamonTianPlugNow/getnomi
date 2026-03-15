@@ -5,30 +5,26 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import ReactMarkdown from 'react-markdown';
+import { useTranslations } from 'next-intl';
 import type { ChatMessage, OnboardingProfileData } from '@/types';
 
 const STORAGE_KEY = 'nomi_onboarding_state';
 
-const PROFILE_FIELDS = [
-  { key: 'display_name', label: 'Name' },
-  { key: 'headline', label: 'Role' },
-  { key: 'location', label: 'Location' },
-  { key: 'work_experience', label: 'Experience' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'can_offer', label: 'Can offer' },
-  { key: 'looking_for', label: 'Looking for' },
-  { key: 'current_goals', label: 'Goals' },
-  { key: 'interests', label: 'Interests' },
-  { key: 'values', label: 'Values' },
-  { key: 'intents', label: 'Connection type' },
+const PROFILE_FIELD_KEYS = [
+  { key: 'display_name', labelKey: 'name' },
+  { key: 'headline', labelKey: 'role' },
+  { key: 'location', labelKey: 'location' },
+  { key: 'work_experience', labelKey: 'experience' },
+  { key: 'skills', labelKey: 'skills' },
+  { key: 'can_offer', labelKey: 'canOffer' },
+  { key: 'looking_for', labelKey: 'lookingFor' },
+  { key: 'current_goals', labelKey: 'goals' },
+  { key: 'interests', labelKey: 'interests' },
+  { key: 'values', labelKey: 'values' },
+  { key: 'intents', labelKey: 'connectionType' },
 ] as const;
 
-const SUGGESTIONS = [
-  "I'm a product designer",
-  "Looking for co-founders",
-  "I want to make friends",
-  "Based in San Francisco",
-];
+const SUGGESTION_KEYS = ['designer', 'cofounder', 'friends', 'location'] as const;
 
 interface UserInfo {
   name?: string;
@@ -41,19 +37,16 @@ interface StoredState {
   profileData: Partial<OnboardingProfileData>;
 }
 
-function getInitialMessage(userInfo: UserInfo | null): string {
+interface GetInitialMessageParams {
+  userInfo: UserInfo | null;
+  t: ReturnType<typeof useTranslations<'onboarding'>>;
+}
+
+function getInitialMessage({ userInfo, t }: GetInitialMessageParams): string {
   if (userInfo?.name) {
-    return `Hey ${userInfo.name}! I'm Nomi, your AI assistant 👋
-
-I see you've signed in. Let's build your personal profile through a quick chat so we can find the right connections for you.
-
-**What do you do, and where are you based?**`;
+    return `${t('greeting', { name: userInfo.name })}\n\n${t('introWithName')}`;
   }
-  return `Hey there! I'm Nomi, your AI assistant 👋
-
-I'll help you create your personal profile through a simple conversation. This will help us find meaningful connections for you.
-
-**Let's start simple — what's your name and what do you do?**`;
+  return `${t('greetingNoName')}\n\n${t('introNoName')}`;
 }
 
 function TypingIndicator() {
@@ -84,6 +77,7 @@ function ProgressBar({ progress }: { progress: number }) {
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
+  const t = useTranslations('onboarding');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -154,7 +148,7 @@ export default function OnboardingPage() {
         setMessages(storedState.messages);
         setProfileData(storedState.profileData);
       } else {
-        const initialMsg: ChatMessage = { role: 'assistant', content: getInitialMessage(info) };
+        const initialMsg: ChatMessage = { role: 'assistant', content: getInitialMessage({ userInfo: info, t }) };
         setMessages([initialMsg]);
         if (info.name) {
           setProfileData({ display_name: info.name });
@@ -164,13 +158,14 @@ export default function OnboardingPage() {
       setIsInitialized(true);
     }
     initialize();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, router, loadState, clearState]);
 
-  const completedFields = PROFILE_FIELDS.filter(({ key }) => {
+  const completedFields = PROFILE_FIELD_KEYS.filter(({ key }) => {
     const v = profileData[key as keyof OnboardingProfileData];
     return v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
   });
-  const progress = Math.round((completedFields.length / PROFILE_FIELDS.length) * 100);
+  const progress = Math.round((completedFields.length / PROFILE_FIELD_KEYS.length) * 100);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +207,7 @@ export default function OnboardingPage() {
       console.error('Chat error:', error);
       setMessages([...newMessages, {
         role: 'assistant',
-        content: "Sorry, something went wrong. Please try again.",
+        content: t('error'),
       }]);
     } finally {
       setIsLoading(false);
@@ -239,7 +234,7 @@ export default function OnboardingPage() {
       console.error('Profile creation error:', error);
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: "There was an issue creating your profile. Please try again.",
+        content: t('profileError'),
       }]);
       setIsSubmitting(false);
     }
@@ -311,13 +306,13 @@ export default function OnboardingPage() {
           {/* Suggestions */}
           {messages.length === 1 && !isLoading && (
             <div className="mt-6 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion, i) => (
+              {SUGGESTION_KEYS.map((key) => (
                 <button
-                  key={i}
-                  onClick={() => setInput(suggestion)}
+                  key={key}
+                  onClick={() => setInput(t(`suggestions.${key}`))}
                   className="px-3 py-1.5 text-sm bg-[#f7f6f3] hover:bg-[#e3e2de] text-[#37352f]/70 rounded-full transition-colors"
                 >
-                  {suggestion}
+                  {t(`suggestions.${key}`)}
                 </button>
               ))}
             </div>
@@ -333,7 +328,7 @@ export default function OnboardingPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isSubmitting ? "Creating your profile..." : "Type your message..."}
+              placeholder={isSubmitting ? t('placeholderCreating') : t('placeholder')}
               disabled={isLoading || isSubmitting}
               className="flex-1 px-4 py-3 border border-[#e3e2de] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] transition-colors text-[#37352f] placeholder:text-[#37352f]/40 disabled:bg-[#f7f6f3]"
             />
@@ -345,7 +340,7 @@ export default function OnboardingPage() {
               {isLoading || isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                'Send'
+                t('send')
               )}
             </button>
           </div>
@@ -355,9 +350,9 @@ export default function OnboardingPage() {
       {/* Progress Sidebar (shown when progress > 0) */}
       {showProgress && (
         <div className="fixed right-6 top-24 w-48 p-4 bg-[#f7f6f3] rounded-xl border border-[#e3e2de] hidden lg:block">
-          <p className="text-xs font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Profile Progress</p>
+          <p className="text-xs font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">{t('progress.title')}</p>
           <div className="space-y-2">
-            {PROFILE_FIELDS.map(({ key, label }) => {
+            {PROFILE_FIELD_KEYS.map(({ key, labelKey }) => {
               const v = profileData[key as keyof OnboardingProfileData];
               const filled = v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
               return (
@@ -369,7 +364,7 @@ export default function OnboardingPage() {
                       </svg>
                     )}
                   </span>
-                  <span className={filled ? 'text-[#37352f]' : 'text-[#37352f]/40'}>{label}</span>
+                  <span className={filled ? 'text-[#37352f]' : 'text-[#37352f]/40'}>{t(`progress.${labelKey}`)}</span>
                 </div>
               );
             })}

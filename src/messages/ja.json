@@ -1,0 +1,262 @@
+{
+  "common": {
+    "login": "ログイン",
+    "signup": "無料で始める",
+    "logout": "ログアウト",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "back": "戻る",
+    "next": "次へ",
+    "submit": "送信",
+    "close": "閉じる"
+  },
+  "nav": {
+    "matches": "マッチ",
+    "meetings": "ミーティング",
+    "profile": "プロフィール",
+    "dashboard": "ダッシュボード"
+  },
+  "home": {
+    "hero": {
+      "title": "あなたのパーソナルコンテキスト、",
+      "titleHighlight": "どこでも使える",
+      "description": "Nomiは、AIを活用してデジタルアイデンティティを作成・維持する方法です。ポータブルな.mdファイルとしてエクスポートし、あらゆるAI製品で使用できます。"
+    },
+    "cta": {
+      "getStarted": "無料で始める",
+      "howItWorks": "詳しく見る"
+    },
+    "preview": {
+      "title": "あなたのストーリー、構造化",
+      "description": "Nomiは自然な会話を通じて包括的なパーソナルコンテキストを作成します。いつでもクリーンな.mdファイルとしてエクスポートできます。",
+      "features": {
+        "skills": "スキルと専門知識",
+        "goals": "現在の目標",
+        "values": "価値観と興味",
+        "connections": "つながりの好み"
+      }
+    },
+    "features": {
+      "title": "必要なものすべて",
+      "chat": {
+        "title": "自然な会話",
+        "description": "フォームを記入する必要はありません。Nomiとチャットするだけで、プロフィールが自動的に作成されます。"
+      },
+      "export": {
+        "title": "ポータブル.mdエクスポート",
+        "description": "プロフィールをMarkdownファイルとしてダウンロード。ChatGPT、Claude、または任意のAIで使用できます。"
+      },
+      "match": {
+        "title": "スマートマッチング",
+        "description": "目標や価値観を共有する人々とオプションでつながることができます。"
+      },
+      "privacy": {
+        "title": "プライバシー優先",
+        "description": "あなたのデータはあなたのもの。いつでもエクスポート、削除、変更できます。"
+      },
+      "ai": {
+        "title": "AI駆動のインサイト",
+        "description": "Nomiはあなたのユニークさを表現する手助けをします。"
+      },
+      "update": {
+        "title": "常に最新",
+        "description": "成長や変化に合わせて、会話を通じてプロフィールを更新できます。"
+      }
+    },
+    "finalCta": {
+      "title": "デジタルアイデンティティを作成する準備はできましたか？",
+      "description": "Nomiを使ってパーソナルコンテキストを維持している数千人の仲間に加わりましょう。"
+    },
+    "footer": {
+      "tagline": "あなたのストーリー、いつもあなたと共に。"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "おかえりなさい",
+      "subtitle": "プロフィールにアクセスするにはサインインしてください",
+      "continueWithGoogle": "Googleで続ける",
+      "continueWithLinkedIn": "LinkedInで続ける",
+      "continueWithEmail": "メールで続ける",
+      "emailPlaceholder": "メールアドレス",
+      "passwordPlaceholder": "パスワード",
+      "signingIn": "サインイン中...",
+      "signIn": "サインイン",
+      "noAccount": "アカウントをお持ちでないですか？",
+      "signUp": "サインアップ"
+    },
+    "signup": {
+      "title": "アカウントを作成",
+      "subtitle": "デジタルアイデンティティの構築を始めましょう",
+      "continueWithGoogle": "Googleで続ける",
+      "continueWithLinkedIn": "LinkedInで続ける",
+      "continueWithEmail": "メールで続ける",
+      "namePlaceholder": "氏名",
+      "emailPlaceholder": "メールアドレス",
+      "passwordPlaceholder": "パスワード（6文字以上）",
+      "creatingAccount": "作成中...",
+      "createAccount": "アカウントを作成",
+      "hasAccount": "すでにアカウントをお持ちですか？",
+      "benefits": {
+        "title": "得られるもの：",
+        "aiContext": "AI駆動のパーソナルコンテキスト",
+        "export": "ポータブル.mdファイルエクスポート",
+        "matching": "他の人とのスマートマッチング"
+      },
+      "terms": "サインアップすることで、利用規約とプライバシーポリシーに同意したことになります。"
+    }
+  },
+  "dashboard": {
+    "welcome": "おかえりなさい、{firstName}さん！",
+    "completeProfile": {
+      "title": "プロフィールを完成させましょう",
+      "description": "Nomiとチャットしてパーソナルコンテキストを作成しましょう。数分で完了します。",
+      "cta": "会話を始める"
+    },
+    "generating": {
+      "title": "AIエージェントを生成中...",
+      "description": "パーソナライズされたエージェントプロフィールを作成しています。通常約30秒かかります。"
+    },
+    "matchingOff": {
+      "title": "マッチングがオフです",
+      "description": "プロフィールでマッチングをオンにして、他の人とつながり始めましょう。",
+      "cta": "プロフィールへ"
+    },
+    "matchingOn": {
+      "title": "AIエージェントが稼働中",
+      "description": "あなたのプロフィールに基づいて意味のあるつながりを探しています。",
+      "cta": "マッチを見る"
+    },
+    "stats": {
+      "activeAgents": "アクティブエージェント",
+      "pendingMatches": "保留中のマッチ",
+      "upcomingMeetings": "今後のミーティング"
+    },
+    "recentMatches": {
+      "title": "最近のマッチ",
+      "viewAll": "すべて見る",
+      "empty": "まだマッチがありません。AIエージェントが検索中です！",
+      "status": {
+        "pending": "保留中",
+        "waiting": "待機中",
+        "actionNeeded": "アクション必要",
+        "new": "新規"
+      }
+    },
+    "upcomingMeetings": {
+      "title": "今後のミーティング",
+      "viewAll": "すべて見る",
+      "empty": "今後のミーティングはありません",
+      "join": "参加"
+    },
+    "aiAgents": {
+      "title": "あなたのAIエージェント",
+      "professional": "💼 プロフェッショナル",
+      "dating": "💕 デート",
+      "friendship": "🤝 友達"
+    }
+  },
+  "profile": {
+    "title": "プロフィール",
+    "updateWithAI": "AIで更新",
+    "exportMd": ".mdをエクスポート",
+    "matching": "マッチング",
+    "on": "オン",
+    "off": "オフ",
+    "sections": {
+      "skills": "スキル",
+      "interests": "興味",
+      "currentGoals": "現在の目標",
+      "values": "価値観",
+      "canOffer": "提供できること",
+      "lookingFor": "探しているもの",
+      "openToConnect": "つながりを求めている"
+    },
+    "intents": {
+      "professional": "💼 プロフェッショナル",
+      "dating": "💕 デート",
+      "friendship": "🤝 友達"
+    }
+  },
+  "matches": {
+    "title": "あなたのマッチ",
+    "tabs": {
+      "pending": "保留中",
+      "confirmed": "確認済み",
+      "past": "過去"
+    },
+    "status": {
+      "matched": "マッチ済み",
+      "waiting": "待機中",
+      "actionNeeded": "アクション必要",
+      "new": "新規",
+      "declined": "辞退",
+      "expired": "期限切れ",
+      "meetingScheduled": "ミーティング予定"
+    },
+    "empty": "まだマッチがありません"
+  },
+  "meetings": {
+    "title": "ミーティング",
+    "subtitle": "予定済みと過去のミーティング",
+    "tabs": {
+      "upcoming": "今後",
+      "past": "過去"
+    },
+    "status": {
+      "scheduled": "予定済み",
+      "completed": "完了",
+      "noShow": "欠席",
+      "cancelled": "キャンセル",
+      "needsFeedback": "フィードバック必要"
+    },
+    "join": "参加",
+    "giveFeedback": "フィードバックする",
+    "empty": "まだミーティングがありません"
+  },
+  "onboarding": {
+    "greeting": "こんにちは {name}さん！私はNomi、あなたのAIアシスタントです 👋",
+    "greetingNoName": "こんにちは！私はNomi、あなたのAIアシスタントです 👋",
+    "introWithName": "サインインを確認しました。簡単なチャットでプロフィールを作成し、あなたに合ったつながりを見つけましょう。\n\n**お仕事は何をされていますか？どちらにお住まいですか？**",
+    "introNoName": "簡単な会話を通じてプロフィールを作成するお手伝いをします。これにより、意味のあるつながりを見つけることができます。\n\n**まずは簡単に — お名前とお仕事を教えてください。**",
+    "suggestions": {
+      "designer": "プロダクトデザイナーです",
+      "cofounder": "共同創業者を探しています",
+      "friends": "友達を作りたい",
+      "location": "サンフランシスコ在住"
+    },
+    "progress": {
+      "title": "プロフィール進捗",
+      "name": "名前",
+      "role": "役割",
+      "location": "場所",
+      "experience": "経験",
+      "skills": "スキル",
+      "canOffer": "提供可能",
+      "lookingFor": "探している",
+      "goals": "目標",
+      "interests": "興味",
+      "values": "価値観",
+      "connectionType": "つながりタイプ"
+    },
+    "error": "申し訳ありません、エラーが発生しました。もう一度お試しください。",
+    "profileError": "プロフィールの作成中に問題が発生しました。もう一度お試しください。",
+    "placeholder": "メッセージを入力...",
+    "placeholderCreating": "プロフィールを作成中...",
+    "send": "送信"
+  },
+  "chat": {
+    "welcomeBack": "おかえりなさい！私はNomi、あなたのAIアシスタントです 👋",
+    "updateIntro": "現在のプロフィールを確認できます。何を更新または追加しますか？以下について教えてください：\n\n- 新しいスキルや経験\n- 更新された目標\n- 探しているものの変更\n- その他あなた自身について",
+    "placeholder": "メッセージを入力...",
+    "send": "送信",
+    "error": "申し訳ありません、エラーが発生���ました。もう一度お試しください。",
+    "saveError": "保存に失敗しました。もう一度お試しください。"
+  },
+  "metadata": {
+    "title": "Nomi - あなたのデジタルワールドマニュアル",
+    "description": "どこでも使えるAI駆動のパーソナルコンテキストを作成。あなたのストーリー、いつもあなたと共に。"
+  }
+}
