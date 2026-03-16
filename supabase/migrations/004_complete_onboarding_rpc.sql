@@ -31,7 +31,7 @@ BEGIN
   -- 2. Get user display_name from users table
   SELECT COALESCE(name, email) INTO v_display_name FROM users WHERE id = p_user_id;
 
-  -- 3. Upsert memory_profile (atomic operation)
+  -- 3. Upsert memory_profile (atomic operation) - includes is_active = true
   INSERT INTO memory_profiles (
     user_id,
     display_name,
@@ -40,7 +40,8 @@ BEGIN
     birth_date,
     birth_province,
     birth_city,
-    onboarding_completed_at
+    onboarding_completed_at,
+    is_active
   )
   VALUES (
     p_user_id,
@@ -50,7 +51,8 @@ BEGIN
     p_birth_date,
     p_birth_province,
     p_birth_city,
-    NOW()
+    NOW(),
+    true
   )
   ON CONFLICT (user_id) DO UPDATE SET
     linkedin_url = EXCLUDED.linkedin_url,
@@ -58,6 +60,7 @@ BEGIN
     birth_province = EXCLUDED.birth_province,
     birth_city = EXCLUDED.birth_city,
     onboarding_completed_at = NOW(),
+    is_active = true,
     updated_at = NOW()
   RETURNING id INTO v_profile_id;
 
