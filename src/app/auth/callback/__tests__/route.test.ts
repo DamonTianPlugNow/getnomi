@@ -13,14 +13,12 @@ vi.mock('next/headers', () => ({
 
 // Mock Supabase SSR
 const mockExchangeCodeForSession = vi.fn();
-const mockUpdate = vi.fn();
+const mockUpsert = vi.fn();
 vi.mock('@supabase/ssr', () => ({
   createServerClient: vi.fn(() => ({
     auth: { exchangeCodeForSession: mockExchangeCodeForSession },
     from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: mockUpdate,
-      })),
+      upsert: mockUpsert,
     })),
   })),
 }));
@@ -38,7 +36,7 @@ function createMockRequest(params: Record<string, string> = {}): NextRequest {
 describe('GET /auth/callback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdate.mockResolvedValue({ error: null });
+    mockUpsert.mockResolvedValue({ error: null });
   });
 
   it('redirects to /dashboard on successful OAuth', async () => {
@@ -172,6 +170,6 @@ describe('GET /auth/callback', () => {
     const request = createMockRequest({ code: 'valid-code' });
     await GET(request);
 
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockUpsert).toHaveBeenCalled();
   });
 });

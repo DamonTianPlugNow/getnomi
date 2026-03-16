@@ -52,6 +52,8 @@ export async function GET(request: NextRequest) {
       if (provider === 'linkedin_oidc' || provider === 'google') {
         try {
           const updateData: Record<string, unknown> = {
+            id: user.id,
+            email: user.email,
             name: user.user_metadata?.name || user.user_metadata?.full_name,
             avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url,
           };
@@ -70,31 +72,32 @@ export async function GET(request: NextRequest) {
             updateData.google_id = user.user_metadata?.sub;
           }
 
-          // Use the authenticated supabase client (RLS policy allows users to update own data)
-          const { error: updateError } = await supabase
+          // Use upsert to handle case where users table record doesn't exist
+          const { error: upsertError } = await supabase
             .from('users')
-            .update(updateData)
-            .eq('id', user.id);
+            .upsert(updateData, { onConflict: 'id' });
 
-          if (updateError) {
+          if (upsertError) {
             console.error(JSON.stringify({
               timestamp: new Date().toISOString(),
               service: 'auth',
-              action: 'oauth_user_update_failed',
+              action: 'oauth_user_upsert_failed',
               userId: user.id,
               provider,
-              error: updateError.message,
+              error: upsertError.message,
             }));
+            // Don't fail the auth flow - user can still proceed
           }
         } catch (err) {
           console.error(JSON.stringify({
             timestamp: new Date().toISOString(),
             service: 'auth',
-            action: 'oauth_user_update_error',
+            action: 'oauth_user_upsert_error',
             userId: user.id,
             provider,
             error: err instanceof Error ? err.message : String(err),
           }));
+          // Don't fail the auth flow - user can still proceed
         }
       }
 
