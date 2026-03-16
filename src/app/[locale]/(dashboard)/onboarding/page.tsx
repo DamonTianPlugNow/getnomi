@@ -412,6 +412,7 @@ export default function OnboardingPage() {
         setEnrichmentWarning(data.warning);
       }
 
+      setIsCompleting(false); // Stop loading spinner before showing complete page
       setShowComplete(true);
       clearState();
     } catch (error) {

@@ -13,8 +13,8 @@ interface FillInBlankProps {
 /**
  * FillInBlank component for template-based form inputs
  *
- * Template format: "我出生于（{year}）年（{month}）月（{day}）日"
- * or: "I was born on ({month})/({day})/({year})"
+ * Template format: "我出生于（__year__）年（__month__）月（__day__）日"
+ * or: "I was born on (__month__)/(__day__)/(__year__)"
  * Values: { year: '1990', month: '5', day: '15' }
  */
 export function FillInBlank({
@@ -25,11 +25,11 @@ export function FillInBlank({
   inputWidths = {},
 }: FillInBlankProps) {
   // Parse the template into segments (text and field placeholders)
-  // Support both full-width （） and half-width () brackets
+  // Support formats: （__field__）, (__field__), __field__
   const segments = useMemo(() => {
-    const result: Array<{ type: 'text' | 'field'; content: string; bracketType: 'full' | 'half' }> = [];
-    // Match both full-width brackets （{field}） and half-width brackets ({field})
-    const regex = /(?:（\{(\w+)\}）|\(\{(\w+)\}\))/g;
+    const result: Array<{ type: 'text' | 'field'; content: string; bracketType: 'full' | 'half' | 'none' }> = [];
+    // Match: （__field__）, (__field__), or standalone __field__
+    const regex = /(?:（__(\w+)__）|\(__(\w+)__\)|__(\w+)__)/g;
     let lastIndex = 0;
     let match;
 
@@ -39,12 +39,12 @@ export function FillInBlank({
         result.push({
           type: 'text',
           content: template.slice(lastIndex, match.index),
-          bracketType: 'full',
+          bracketType: 'none',
         });
       }
-      // Add the field placeholder - match[1] is full-width, match[2] is half-width
-      const fieldName = match[1] || match[2];
-      const bracketType = match[1] ? 'full' : 'half';
+      // Add the field placeholder - match[1] is full-width, match[2] is half-width, match[3] is no bracket
+      const fieldName = match[1] || match[2] || match[3];
+      const bracketType = match[1] ? 'full' : match[2] ? 'half' : 'none';
       result.push({
         type: 'field',
         content: fieldName,
@@ -58,7 +58,7 @@ export function FillInBlank({
       result.push({
         type: 'text',
         content: template.slice(lastIndex),
-        bracketType: 'full',
+        bracketType: 'none',
       });
     }
 
@@ -96,8 +96,8 @@ export function FillInBlank({
         const value = values[field] || '';
         const placeholder = placeholders[field] || '';
         const width = getInputWidth(field);
-        const openBracket = segment.bracketType === 'full' ? '（' : '(';
-        const closeBracket = segment.bracketType === 'full' ? '）' : ')';
+        const openBracket = segment.bracketType === 'full' ? '（' : segment.bracketType === 'half' ? '(' : '';
+        const closeBracket = segment.bracketType === 'full' ? '）' : segment.bracketType === 'half' ? ')' : '';
 
         return (
           <span key={index} className="inline-flex items-center">
