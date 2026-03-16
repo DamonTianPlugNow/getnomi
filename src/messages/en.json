@@ -162,9 +162,22 @@
     "title": "Profile",
     "updateWithAI": "Update with AI",
     "exportMd": "Export .md",
+    "exporting": "Exporting...",
     "matching": "Matching",
+    "matchingOn": "Matching On",
+    "matchingOff": "Matching Off",
+    "updating": "Updating...",
     "on": "On",
     "off": "Off",
+    "noProfile": "No profile yet",
+    "noProfileDescription": "Create your profile to get started",
+    "createProfile": "Create Profile",
+    "profileNotFound": "Profile not found",
+    "loadError": "Failed to load profile",
+    "exportError": "Failed to export profile",
+    "updateError": "Failed to update matching status",
+    "signOut": "Sign out",
+    "yourAgents": "Your AI Agents",
     "sections": {
       "skills": "Skills",
       "interests": "Interests",
@@ -178,7 +191,13 @@
       "professional": "💼 Professional",
       "dating": "💕 Dating",
       "friendship": "🤝 Friendship"
-    }
+    },
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountTitle": "Delete Your Account",
+    "deleteAccountWarning": "Once you delete your account, all your data will be permanently removed. This action cannot be undone.",
+    "deleteAccountConfirm": "To confirm, please type DELETE below:",
+    "deleteAccountError": "Failed to delete account. Please try again."
   },
   "matches": {
     "title": "Your Matches",
@@ -196,25 +215,92 @@
       "expired": "Expired",
       "meetingScheduled": "Meeting scheduled"
     },
-    "empty": "No matches yet"
+    "empty": "No matches yet",
+    "emptyDescription": "We're working on finding your perfect matches. Check back soon!",
+    "updateProfile": "Update your profile",
+    "detail": {
+      "title": "Match Details",
+      "back": "Back to matches",
+      "notFound": "Match not found",
+      "notAuthorized": "Not authorized",
+      "matchScore": "{score}% match",
+      "hoursLeft": "{hours}h left to respond",
+      "meetingScheduled": "Meeting Scheduled!",
+      "joinMeeting": "Join Meeting",
+      "waitingResponse": "Waiting for response",
+      "waitingDescription": "You've approved this match. Waiting for {name} to respond.",
+      "whyMatched": "Why you matched",
+      "talkingPoints": "Talking points",
+      "conversationStarters": "Conversation starters",
+      "pass": "Pass",
+      "approve": "Approve Match",
+      "processing": "Processing..."
+    }
   },
   "meetings": {
     "title": "Meetings",
     "subtitle": "Your scheduled and past meetings",
     "tabs": {
       "upcoming": "Upcoming",
-      "completed": "Completed"
+      "past": "Past"
     },
     "status": {
       "scheduled": "Scheduled",
       "completed": "Completed",
       "noShow": "No Show",
       "cancelled": "Cancelled",
-      "needsFeedback": "Needs feedback"
+      "needsFeedback": "Needs feedback",
+      "upcoming": "Upcoming"
+    },
+    "time": {
+      "today": "Today at {time}",
+      "tomorrow": "Tomorrow at {time}"
     },
     "join": "Join",
     "giveFeedback": "Give feedback",
-    "empty": "No meetings yet"
+    "empty": "No meetings yet",
+    "emptyDescription": "When you confirm a match, a meeting will be automatically scheduled.",
+    "viewMatches": "View your matches"
+  },
+  "feedback": {
+    "title": "Meeting Feedback",
+    "alreadySubmitted": "Feedback already submitted",
+    "thanksMessage": "Thanks for your feedback!",
+    "backToMeetings": "Back to meetings",
+    "notFound": "Meeting not found",
+    "notAuthorized": "Not authorized",
+    "didMeetQuestion": "Did you complete this meeting?",
+    "yesMet": "Yes, we met",
+    "didNotMeet": "Didn't meet",
+    "ratingQuestion": "How was your meeting?",
+    "ratingLabels": {
+      "0": "Tap stars to rate",
+      "1": "Not great",
+      "2": "Okay",
+      "3": "Pretty good",
+      "4": "Great",
+      "5": "Amazing!"
+    },
+    "wouldMeetAgainQuestion": "Would you meet again?",
+    "wouldMeetAgainYes": "Yes",
+    "wouldMeetAgainNo": "Not really",
+    "highlightsQuestion": "What were the highlights? (select multiple)",
+    "highlights": {
+      "great_conversation": "Great conversation",
+      "shared_interests": "Shared interests",
+      "valuable_insights": "Valuable insights",
+      "potential_collaboration": "Potential collaboration",
+      "friendly_vibe": "Friendly vibe",
+      "learned_something": "Learned something"
+    },
+    "notesQuestion": "Anything else? (optional)",
+    "notesQuestionNoShow": "What happened? (optional)",
+    "notesPlaceholder": "Share your thoughts...",
+    "notesPlaceholderNoShow": "Tell us why you didn't meet...",
+    "selectDidMeet": "Please select whether the meeting happened",
+    "submitError": "Failed to submit",
+    "submitting": "Submitting...",
+    "submit": "Submit Feedback"
   },
   "onboarding": {
     "greeting": "Hey {name}! I'm Nomi, your AI assistant 👋",
@@ -245,7 +331,90 @@
     "profileError": "There was an issue creating your profile. Please try again.",
     "placeholder": "Type your message...",
     "placeholderCreating": "Creating your profile...",
-    "send": "Send"
+    "send": "Send",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "complete": "Complete",
+    "steps": {
+      "linkedin": "LinkedIn",
+      "birth": "Birth Info",
+      "education": "Education",
+      "work": "Work"
+    },
+    "linkedin": {
+      "title": "Import from LinkedIn",
+      "description": "Enter your LinkedIn profile URL to auto-fill your education and work history",
+      "placeholder": "https://linkedin.com/in/your-profile",
+      "import": "Import Profile",
+      "importing": "Importing...",
+      "importSuccess": "Import successful! Data has been populated in the next steps.",
+      "invalidUrl": "Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/your-profile)",
+      "importConflict": {
+        "title": "Data Already Exists",
+        "description": "You already have {existing} entries. LinkedIn has {importing} entries to import.",
+        "existingEducation": "{count} education entries",
+        "existingWork": "{count} work entries",
+        "replace": "Replace All",
+        "merge": "Merge Data",
+        "cancel": "Cancel"
+      }
+    },
+    "birth": {
+      "title": "Birth Information",
+      "description": "Tell us about your birth date and place",
+      "dateLabel": "Birth Date",
+      "dateTemplate": "I was born on ({month})/({day})/({year})",
+      "placeLabel": "Birthplace",
+      "placeTemplate": "in ({city}), ({province})",
+      "provincePlaceholder": "State/Province",
+      "cityPlaceholder": "City"
+    },
+    "education": {
+      "title": "Education History",
+      "description": "Record your educational journey (optional)",
+      "types": {
+        "kindergarten": "Kindergarten",
+        "elementary": "Elementary School",
+        "middle_school": "Middle School",
+        "high_school": "High School",
+        "university": "University"
+      },
+      "periodTemplate": "From ({startYear}) to ({endYear})",
+      "locationTemplate": "At ({school}) in ({city}), ({province})",
+      "majorTemplate": "Major: ({major})",
+      "schoolPlaceholder": "School name",
+      "majorPlaceholder": "Major/Field of study"
+    },
+    "work": {
+      "title": "Work Experience",
+      "description": "Record your career journey (optional)",
+      "experienceLabel": "Work Experience",
+      "periodTemplate": "From ({startYear}) to ({endYear})",
+      "periodCurrentTemplate": "From ({startYear}) to present",
+      "currentJob": "Currently working here",
+      "locationTemplate": "in ({city}), ({province})",
+      "companyTemplate": "at ({company}) as ({position})",
+      "companyPlaceholder": "Company name",
+      "positionPlaceholder": "Position title",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Briefly describe your work...",
+      "addExperience": "Add Work Experience"
+    },
+    "complete": {
+      "title": "Awesome! Your timeline is ready",
+      "description": "Here's a preview of your life timeline. You can edit it anytime from the dashboard.",
+      "generating": "Generating your timeline...",
+      "present": "Present",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "timeline": {
+      "birth": "Birth"
+    },
+    "errors": {
+      "emptyProfile": "Please add at least one piece of information before completing.",
+      "completeFailed": "Failed to complete onboarding. Please try again."
+    }
   },
   "chat": {
     "welcomeBack": "Welcome back! I'm Nomi, your AI assistant 👋",
@@ -254,6 +423,41 @@
     "send": "Send",
     "error": "Sorry, something went wrong. Please try again.",
     "saveError": "Failed to save changes. Please try again."
+  },
+  "timeline": {
+    "title": "Life Timeline",
+    "addEvent": "Add Event",
+    "eventType": "Event Type",
+    "types": {
+      "birth": "Birth",
+      "education_kindergarten": "Kindergarten",
+      "education_elementary": "Elementary School",
+      "education_middle_school": "Middle School",
+      "education_high_school": "High School",
+      "education_university": "University",
+      "work": "Work",
+      "custom": "Custom"
+    },
+    "title": "Title",
+    "titlePlaceholder": "Event title",
+    "startYear": "Start Year",
+    "endYear": "End Year",
+    "isCurrent": "Currently ongoing",
+    "province": "State/Province",
+    "provincePlaceholder": "State/Province",
+    "city": "City",
+    "cityPlaceholder": "City",
+    "school": "School",
+    "schoolPlaceholder": "School name",
+    "company": "Company",
+    "companyPlaceholder": "Company name",
+    "position": "Position",
+    "positionPlaceholder": "Position title",
+    "description": "Description",
+    "descriptionPlaceholder": "Event description (optional)",
+    "cancel": "Cancel",
+    "add": "Add",
+    "adding": "Adding..."
   },
   "metadata": {
     "title": "Nomi - Your Digital World Manual",

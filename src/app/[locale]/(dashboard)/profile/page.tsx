@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { RelationshipIntent, WorkExperience } from '@/types';
+import { useTranslations } from 'next-intl';
 
 interface ProfileData {
   id: string;
@@ -36,12 +37,19 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+  const t = useTranslations();
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [matchingEnabled, setMatchingEnabled] = useState(false);
   const [togglingMatching, setTogglingMatching] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -52,7 +60,7 @@ export default function ProfilePage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push('/login');
+      router.push(`/${locale}/login`);
       return;
     }
 
@@ -63,7 +71,7 @@ export default function ProfilePage() {
       .single();
 
     if (userError || !userData) {
-      setError('Failed to load profile');
+      setError(t('profile.loadError'));
       setLoading(false);
       return;
     }
@@ -104,7 +112,7 @@ export default function ProfilePage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch {
-      setError('Failed to export profile');
+      setError(t('profile.exportError'));
     } finally {
       setExporting(false);
     }
@@ -121,7 +129,7 @@ export default function ProfilePage() {
       if (!response.ok) throw new Error('Failed to update');
       setMatchingEnabled(!matchingEnabled);
     } catch {
-      setError('Failed to update matching status');
+      setError(t('profile.updateError'));
     } finally {
       setTogglingMatching(false);
     }
@@ -130,16 +138,34 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/');
+    router.push(`/${locale}`);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch('/api/user/delete', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      // Sign out and redirect to home
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push(`/${locale}`);
+    } catch {
+      setError(t('profile.deleteAccountError'));
+      setDeleting(false);
+    }
   };
 
   const getIntentLabel = (intent: RelationshipIntent) => {
-    const labels: Record<RelationshipIntent, string> = {
-      professional: '💼 Professional',
-      dating: '💕 Dating',
-      friendship: '🤝 Friendship',
-    };
-    return labels[intent];
+    return t(`profile.intents.${intent}`);
   };
 
   const getIntentColor = (intent: RelationshipIntent) => {
@@ -162,7 +188,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-[#37352f]/60">Profile not found</p>
+        <p className="text-[#37352f]/60">{t('profile.profileNotFound')}</p>
       </div>
     );
   }
@@ -174,7 +200,7 @@ export default function ProfilePage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#e3e2de]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
               <span className="text-white font-bold text-sm">N</span>
             </div>
@@ -182,18 +208,18 @@ export default function ProfilePage() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Dashboard
+            <Link href={`/${locale}/dashboard`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.dashboard')}
             </Link>
-            <Link href="/matches" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Matches
+            <Link href={`/${locale}/matches`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.matches')}
             </Link>
             <div className="w-px h-5 bg-[#e3e2de] mx-2" />
             <button
               onClick={handleSignOut}
               className="px-4 py-2 text-sm font-medium text-[#37352f]/40 hover:text-[#eb5757] hover:bg-[#eb5757]/5 rounded-md transition-colors"
             >
-              Sign out
+              {t('profile.signOut')}
             </button>
           </nav>
         </div>
@@ -213,13 +239,13 @@ export default function ProfilePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-[#37352f] mb-2">No profile yet</h2>
-            <p className="text-[#37352f]/60 mb-6">Create your profile to get started</p>
+            <h2 className="text-xl font-semibold text-[#37352f] mb-2">{t('profile.noProfile')}</h2>
+            <p className="text-[#37352f]/60 mb-6">{t('profile.noProfileDescription')}</p>
             <Link
-              href="/onboarding"
+              href={`/${locale}/onboarding`}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
-              Create Profile
+              {t('profile.createProfile')}
             </Link>
           </div>
         ) : (
@@ -255,13 +281,13 @@ export default function ProfilePage() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/profile/chat"
+                href={`/${locale}/profile/chat`}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                Update with AI
+                {t('profile.updateWithAI')}
               </Link>
               <button
                 onClick={handleExport}
@@ -271,7 +297,7 @@ export default function ProfilePage() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                {exporting ? 'Exporting...' : 'Export .md'}
+                {exporting ? t('profile.exporting') : t('profile.exportMd')}
               </button>
               <button
                 onClick={handleToggleMatching}
@@ -283,7 +309,7 @@ export default function ProfilePage() {
                 }`}
               >
                 <div className={`w-2 h-2 rounded-full ${matchingEnabled ? 'bg-[#0f7b6c]' : 'bg-[#37352f]/30'}`} />
-                {togglingMatching ? 'Updating...' : matchingEnabled ? 'Matching On' : 'Matching Off'}
+                {togglingMatching ? t('profile.updating') : matchingEnabled ? t('profile.matchingOn') : t('profile.matchingOff')}
               </button>
             </div>
 
@@ -292,7 +318,7 @@ export default function ProfilePage() {
               {/* Skills */}
               {mp.skills && mp.skills.length > 0 && (
                 <div className="p-5 bg-[#f7f6f3] rounded-xl">
-                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Skills</h3>
+                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">{t('profile.sections.skills')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {mp.skills.map((skill, i) => (
                       <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#e3e2de]">
@@ -306,7 +332,7 @@ export default function ProfilePage() {
               {/* Interests */}
               {mp.interests && mp.interests.length > 0 && (
                 <div className="p-5 bg-[#f7f6f3] rounded-xl">
-                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Interests</h3>
+                  <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">{t('profile.sections.interests')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {mp.interests.map((interest, i) => (
                       <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#e3e2de]">
@@ -320,7 +346,7 @@ export default function ProfilePage() {
               {/* Goals */}
               {mp.current_goals && mp.current_goals.length > 0 && (
                 <div className="p-5 bg-[#0077cc]/5 rounded-xl border border-[#0077cc]/10">
-                  <h3 className="text-sm font-semibold text-[#0077cc] uppercase tracking-wide mb-3">Current Goals</h3>
+                  <h3 className="text-sm font-semibold text-[#0077cc] uppercase tracking-wide mb-3">{t('profile.sections.currentGoals')}</h3>
                   <ul className="space-y-2">
                     {mp.current_goals.map((goal, i) => (
                       <li key={i} className="flex items-start gap-2 text-[#37352f]">
@@ -335,7 +361,7 @@ export default function ProfilePage() {
               {/* Values */}
               {mp.values && mp.values.length > 0 && (
                 <div className="p-5 bg-[#9065b0]/5 rounded-xl border border-[#9065b0]/10">
-                  <h3 className="text-sm font-semibold text-[#9065b0] uppercase tracking-wide mb-3">Values</h3>
+                  <h3 className="text-sm font-semibold text-[#9065b0] uppercase tracking-wide mb-3">{t('profile.sections.values')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {mp.values.map((value, i) => (
                       <span key={i} className="px-3 py-1 bg-white text-[#37352f] text-sm rounded-md border border-[#9065b0]/20">
@@ -349,7 +375,7 @@ export default function ProfilePage() {
               {/* Can Offer */}
               {mp.can_offer && mp.can_offer.length > 0 && (
                 <div className="p-5 bg-[#0f7b6c]/5 rounded-xl border border-[#0f7b6c]/10">
-                  <h3 className="text-sm font-semibold text-[#0f7b6c] uppercase tracking-wide mb-3">What I Can Offer</h3>
+                  <h3 className="text-sm font-semibold text-[#0f7b6c] uppercase tracking-wide mb-3">{t('profile.sections.canOffer')}</h3>
                   <ul className="space-y-2">
                     {mp.can_offer.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-[#37352f]">
@@ -366,7 +392,7 @@ export default function ProfilePage() {
               {/* Looking For */}
               {mp.looking_for && mp.looking_for.length > 0 && (
                 <div className="p-5 bg-[#f7c94b]/5 rounded-xl border border-[#f7c94b]/20">
-                  <h3 className="text-sm font-semibold text-[#b8860b] uppercase tracking-wide mb-3">Looking For</h3>
+                  <h3 className="text-sm font-semibold text-[#b8860b] uppercase tracking-wide mb-3">{t('profile.sections.lookingFor')}</h3>
                   <ul className="space-y-2">
                     {mp.looking_for.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-[#37352f]">
@@ -382,7 +408,7 @@ export default function ProfilePage() {
             {/* Relationship Types */}
             {mp.intents && mp.intents.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">Open to Connect</h3>
+                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">{t('profile.sections.openToConnect')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {mp.intents.map((intent) => {
                     const color = getIntentColor(intent);
@@ -399,7 +425,7 @@ export default function ProfilePage() {
             {/* AI Agents */}
             {profile.agent_profiles && profile.agent_profiles.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">Your AI Agents</h3>
+                <h3 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">{t('profile.yourAgents')}</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   {profile.agent_profiles.map((agent) => {
                     const color = getIntentColor(agent.intent);
@@ -424,6 +450,55 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+
+            {/* Danger Zone */}
+            <div className="mt-12 pt-8 border-t border-[#eb5757]/20">
+              <h3 className="text-sm font-semibold text-[#eb5757] uppercase tracking-wide mb-4">{t('profile.dangerZone')}</h3>
+              <div className="p-5 rounded-xl border border-[#eb5757]/30 bg-[#eb5757]/5">
+                <p className="text-sm text-[#37352f]/70 mb-4">{t('profile.deleteAccountWarning')}</p>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-4 py-2 bg-[#eb5757] text-white text-sm font-medium rounded-lg hover:bg-[#d94444] transition-colors"
+                >
+                  {t('profile.deleteAccount')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Account Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+              <h3 className="text-lg font-semibold text-[#37352f] mb-2">{t('profile.deleteAccountTitle')}</h3>
+              <p className="text-sm text-[#37352f]/70 mb-4">{t('profile.deleteAccountConfirm')}</p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full px-4 py-2 border border-[#e3e2de] rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#eb5757]/50"
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  className="px-4 py-2 bg-[#eb5757] text-white text-sm font-medium rounded-lg hover:bg-[#d94444] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? t('common.loading') : t('profile.deleteAccount')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

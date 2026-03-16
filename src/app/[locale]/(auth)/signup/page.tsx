@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -9,7 +9,6 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function SignUpPage() {
   const supabase = createClient();
-  const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
   const t = useTranslations('auth.signup');
@@ -20,6 +19,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEmailSignup, setShowEmailSignup] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleLinkedInSignUp = async () => {
     await supabase.auth.signInWithOAuth({
@@ -51,14 +51,24 @@ export default function SignUpPage() {
         data: {
           name,
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding&locale=${locale}`,
       },
     });
 
     if (error) {
-      setError(error.message);
+      // 转换错误信息为友好提示
+      const errorMessages: Record<string, string> = {
+        'User already registered': t('errors.userExists'),
+        'Password should be at least 6 characters': t('errors.passwordTooShort'),
+        'Unable to validate email address: invalid format': t('errors.invalidEmail'),
+        'Signup requires a valid password': t('errors.invalidPassword'),
+      };
+      setError(errorMessages[error.message] || error.message);
       setLoading(false);
     } else {
-      router.push(`/${locale}/onboarding`);
+      // 显示邮箱验证提示
+      setEmailSent(true);
+      setLoading(false);
     }
   };
 
@@ -67,6 +77,59 @@ export default function SignUpPage() {
     t('benefits.export'),
     t('benefits.matching'),
   ];
+
+  // 邮箱验证提示页面
+  if (emailSent) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+        <div className="w-full max-w-sm text-center">
+          <Link href={`/${locale}`} className="inline-flex items-center gap-2 mb-8">
+            <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
+            </div>
+            <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
+          </Link>
+
+          <div className="w-16 h-16 mx-auto mb-6 bg-[#0f7b6c]/10 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#0f7b6c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          <h1 className="text-2xl font-bold text-[#37352f] mb-3">
+            {t('emailSent.title')}
+          </h1>
+          <p className="text-[#37352f]/60 text-sm mb-2">
+            {t('emailSent.description')}
+          </p>
+          <p className="text-[#0077cc] font-medium mb-6">
+            {email}
+          </p>
+          <p className="text-[#37352f]/40 text-xs mb-8">
+            {t('emailSent.checkSpam')}
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => setEmailSent(false)}
+              className="w-full px-4 py-3 text-[#37352f]/70 hover:text-[#37352f] rounded-md border border-[#e3e2de] hover:bg-[#f7f6f3] transition-colors font-medium"
+            >
+              {t('emailSent.changeEmail')}
+            </button>
+            <Link
+              href={`/${locale}/login`}
+              className="block w-full px-4 py-3 text-[#0077cc] hover:text-[#0066b3] rounded-md border border-[#0077cc] hover:bg-[#0077cc]/5 transition-colors font-medium"
+            >
+              {t('emailSent.backToLogin')}
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white flex items-center justify-center px-4">
@@ -132,7 +195,7 @@ export default function SignUpPage() {
           ) : (
             <form onSubmit={handleEmailSignUp} className="space-y-3">
               {error && (
-                <div className="p-3 bg-[#eb5757]/10 border border-[#eb5757]/20 rounded-md text-[#eb5757] text-sm">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600">
                   {error}
                 </div>
               )}
@@ -141,7 +204,7 @@ export default function SignUpPage() {
                 placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] transition-colors text-[#37352f] placeholder:text-[#37352f]/40"
+                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] text-[#37352f]"
                 required
               />
               <input
@@ -149,7 +212,7 @@ export default function SignUpPage() {
                 placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] transition-colors text-[#37352f] placeholder:text-[#37352f]/40"
+                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] text-[#37352f]"
                 required
               />
               <input
@@ -157,10 +220,11 @@ export default function SignUpPage() {
                 placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] transition-colors text-[#37352f] placeholder:text-[#37352f]/40"
-                required
+                className="w-full px-4 py-3 border border-[#e3e2de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] text-[#37352f]"
                 minLength={6}
+                required
               />
+              <p className="text-xs text-[#37352f]/40">{t('passwordHint')}</p>
               <button
                 type="submit"
                 disabled={loading}
@@ -190,7 +254,7 @@ export default function SignUpPage() {
         <p className="mt-6 text-center text-sm text-[#37352f]/60">
           {t('hasAccount')}{' '}
           <Link href={`/${locale}/login`} className="text-[#0077cc] hover:underline font-medium">
-            {t('loginLink', { defaultValue: 'Log in' })}
+            {t('loginLink')}
           </Link>
         </p>
 

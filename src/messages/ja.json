@@ -162,9 +162,22 @@
     "title": "プロフィール",
     "updateWithAI": "AIで更新",
     "exportMd": ".mdをエクスポート",
+    "exporting": "エクスポート中...",
     "matching": "マッチング",
+    "matchingOn": "マッチング オン",
+    "matchingOff": "マッチング オフ",
+    "updating": "更新中...",
     "on": "オン",
     "off": "オフ",
+    "noProfile": "プロフィールがありません",
+    "noProfileDescription": "プロフィールを作成して始めましょう",
+    "createProfile": "プロフィールを作成",
+    "profileNotFound": "プロフィールが見つかりません",
+    "loadError": "プロフィールの読み込みに失敗しました",
+    "exportError": "プロフィールのエクスポートに失敗しました",
+    "updateError": "マッチング状態の更新に失敗しました",
+    "signOut": "サインアウト",
+    "yourAgents": "あなたのAIエージェント",
     "sections": {
       "skills": "スキル",
       "interests": "興味",
@@ -196,7 +209,27 @@
       "expired": "期限切れ",
       "meetingScheduled": "ミーティング予定"
     },
-    "empty": "まだマッチがありません"
+    "empty": "まだマッチがありません",
+    "emptyDescription": "あなたにぴったりのマッチを探しています。また後で確認してください！",
+    "updateProfile": "プロフィールを更新",
+    "detail": {
+      "title": "マッチ詳細",
+      "back": "マッチ一覧に戻る",
+      "notFound": "マッチが見つかりません",
+      "notAuthorized": "アクセス権限がありません",
+      "matchScore": "{score}% マッチ",
+      "hoursLeft": "返答まで残り {hours} 時間",
+      "meetingScheduled": "ミーティング予定！",
+      "joinMeeting": "ミーティングに参加",
+      "waitingResponse": "返答待ち",
+      "waitingDescription": "このマッチを承認しました。{name} の返答を待っています。",
+      "whyMatched": "マッチした理由",
+      "talkingPoints": "話題のポイント",
+      "conversationStarters": "会話のきっかけ",
+      "pass": "パス",
+      "approve": "マッチを承認",
+      "processing": "処理中..."
+    }
   },
   "meetings": {
     "title": "ミーティング",
@@ -210,11 +243,58 @@
       "completed": "完了",
       "noShow": "欠席",
       "cancelled": "キャンセル",
-      "needsFeedback": "フィードバック必要"
+      "needsFeedback": "フィードバック必要",
+      "upcoming": "まもなく"
+    },
+    "time": {
+      "today": "今日 {time}",
+      "tomorrow": "明日 {time}"
     },
     "join": "参加",
     "giveFeedback": "フィードバックする",
-    "empty": "まだミーティングがありません"
+    "empty": "まだミーティングがありません",
+    "emptyDescription": "マッチを確認すると、ミーティングが自動的に予定されます。",
+    "viewMatches": "マッチを見る"
+  },
+  "feedback": {
+    "title": "ミーティングフィードバック",
+    "alreadySubmitted": "フィードバック送信済み",
+    "thanksMessage": "フィードバックありがとうございます！",
+    "backToMeetings": "ミーティング一覧に戻る",
+    "notFound": "ミーティングが見つかりません",
+    "notAuthorized": "アクセス権限がありません",
+    "didMeetQuestion": "このミーティングは完了しましたか？",
+    "yesMet": "はい、会いました",
+    "didNotMeet": "会えませんでした",
+    "ratingQuestion": "ミーティングはいかがでしたか？",
+    "ratingLabels": {
+      "0": "星をタップして評価",
+      "1": "あまり良くない",
+      "2": "まあまあ",
+      "3": "良かった",
+      "4": "とても良かった",
+      "5": "素晴らしい！"
+    },
+    "wouldMeetAgainQuestion": "また会いたいですか？",
+    "wouldMeetAgainYes": "はい",
+    "wouldMeetAgainNo": "あまり",
+    "highlightsQuestion": "ハイライトは何でしたか？（複数選択可）",
+    "highlights": {
+      "great_conversation": "素晴らしい会話",
+      "shared_interests": "共通の興味",
+      "valuable_insights": "価値ある洞察",
+      "potential_collaboration": "コラボの可能性",
+      "friendly_vibe": "フレンドリーな雰囲気",
+      "learned_something": "学びがあった"
+    },
+    "notesQuestion": "その他（任意）",
+    "notesQuestionNoShow": "何がありましたか？（任意）",
+    "notesPlaceholder": "感想をシェア...",
+    "notesPlaceholderNoShow": "会えなかった理由を教えてください...",
+    "selectDidMeet": "ミーティングが行われたかどうか選択してください",
+    "submitError": "送信に失敗しました",
+    "submitting": "送信中...",
+    "submit": "フィードバックを送信"
   },
   "onboarding": {
     "greeting": "こんにちは {name}さん！私はNomi、あなたのAIアシスタントです 👋",
@@ -245,7 +325,90 @@
     "profileError": "プロフィールの作成中に問題が発生しました。もう一度お試しください。",
     "placeholder": "メッセージを入力...",
     "placeholderCreating": "プロフィールを作成中...",
-    "send": "送信"
+    "send": "送信",
+    "skip": "スキップ",
+    "next": "次へ",
+    "back": "戻る",
+    "complete": "完了",
+    "steps": {
+      "linkedin": "LinkedIn",
+      "birth": "生年月日",
+      "education": "学歴",
+      "work": "職歴"
+    },
+    "linkedin": {
+      "title": "LinkedInからインポート",
+      "description": "LinkedInプロフィールURLを入力して、学歴と職歴を自動入力します",
+      "placeholder": "https://linkedin.com/in/your-profile",
+      "import": "プロフィールをインポート",
+      "importing": "インポート中...",
+      "importSuccess": "インポート成功！次のステップにデータが入力されました。",
+      "invalidUrl": "有効なLinkedInプロフィールURLを入力してください（例：https://linkedin.com/in/your-profile）",
+      "importConflict": {
+        "title": "データが既に存在します",
+        "description": "既に{existing}件のデータがあります。LinkedInには{importing}件のインポート可能なデータがあります。",
+        "existingEducation": "{count}件の学歴データ",
+        "existingWork": "{count}件の職歴データ",
+        "replace": "すべて置き換え",
+        "merge": "マージする",
+        "cancel": "キャンセル"
+      }
+    },
+    "birth": {
+      "title": "生年月日情報",
+      "description": "生年月日と出生地を教えてください",
+      "dateLabel": "生年月日",
+      "dateTemplate": "（{year}）年（{month}）月（{day}）日生まれ",
+      "placeLabel": "出生地",
+      "placeTemplate": "（{province}）（{city}）",
+      "provincePlaceholder": "都道府県",
+      "cityPlaceholder": "市区町村"
+    },
+    "education": {
+      "title": "学歴",
+      "description": "学歴を記録してください（任意）",
+      "types": {
+        "kindergarten": "幼稚園",
+        "elementary": "小学校",
+        "middle_school": "中学校",
+        "high_school": "高校",
+        "university": "大学"
+      },
+      "periodTemplate": "（{startYear}）年から（{endYear}）年",
+      "locationTemplate": "（{province}）（{city}）の（{school}）",
+      "majorTemplate": "専攻：（{major}）",
+      "schoolPlaceholder": "学校名",
+      "majorPlaceholder": "専攻/学部"
+    },
+    "work": {
+      "title": "職歴",
+      "description": "職歴を記録してください（任意）",
+      "experienceLabel": "職歴",
+      "periodTemplate": "（{startYear}）年から（{endYear}）年",
+      "periodCurrentTemplate": "（{startYear}）年から現在",
+      "currentJob": "現在勤務中",
+      "locationTemplate": "（{province}）（{city}）",
+      "companyTemplate": "（{company}）で（{position}）として",
+      "companyPlaceholder": "会社名",
+      "positionPlaceholder": "役職名",
+      "descriptionLabel": "説明（任意）",
+      "descriptionPlaceholder": "仕事内容を簡潔に...",
+      "addExperience": "職歴を追加"
+    },
+    "complete": {
+      "title": "素晴らしい！タイムラインが完成しました",
+      "description": "あなたの人生タイムラインのプレビューです。ダッシュボードからいつでも編集できます。",
+      "generating": "タイムラインを生成中...",
+      "present": "現在",
+      "goToDashboard": "ダッシュボードへ"
+    },
+    "timeline": {
+      "birth": "誕生"
+    },
+    "errors": {
+      "emptyProfile": "完了する前に、少なくとも1つの情報を追加してください。",
+      "completeFailed": "完了に失敗しました。もう一度お試しください。"
+    }
   },
   "chat": {
     "welcomeBack": "おかえりなさい！私はNomi、あなたのAIアシスタントです 👋",

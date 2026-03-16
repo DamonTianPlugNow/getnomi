@@ -162,9 +162,22 @@
     "title": "个人资料",
     "updateWithAI": "AI 更新",
     "exportMd": "导出 .md",
+    "exporting": "导出中...",
     "matching": "匹配",
+    "matchingOn": "匹配已开启",
+    "matchingOff": "匹配已关闭",
+    "updating": "更新中...",
     "on": "开启",
     "off": "关闭",
+    "noProfile": "暂无档案",
+    "noProfileDescription": "创建你的档案以开始",
+    "createProfile": "创建档案",
+    "profileNotFound": "未找到档案",
+    "loadError": "加载档案失败",
+    "exportError": "导出档案失败",
+    "updateError": "更新匹配状态失败",
+    "signOut": "退出登录",
+    "yourAgents": "你的 AI 代理",
     "sections": {
       "skills": "技能",
       "interests": "兴趣",
@@ -178,7 +191,13 @@
       "professional": "💼 职业",
       "dating": "💕 约会",
       "friendship": "🤝 友谊"
-    }
+    },
+    "dangerZone": "危险区域",
+    "deleteAccount": "注销账号",
+    "deleteAccountTitle": "注销你的账号",
+    "deleteAccountWarning": "一旦注销账号，你的所有数据将被永久删除。此操作无法撤销。",
+    "deleteAccountConfirm": "请在下方输入 DELETE 以确认：",
+    "deleteAccountError": "注销账号失败，请重试。"
   },
   "matches": {
     "title": "你的匹配",
@@ -196,7 +215,27 @@
       "expired": "已过期",
       "meetingScheduled": "会议已安排"
     },
-    "empty": "暂无匹配"
+    "empty": "暂无匹配",
+    "emptyDescription": "我们正在为你寻找完美的匹配。请稍后再来查看！",
+    "updateProfile": "更新你的资料",
+    "detail": {
+      "title": "匹配详情",
+      "back": "返回匹配列表",
+      "notFound": "未找到匹配",
+      "notAuthorized": "无权访问",
+      "matchScore": "{score}% 匹配度",
+      "hoursLeft": "还剩 {hours} 小时回复",
+      "meetingScheduled": "会议已安排！",
+      "joinMeeting": "加入会议",
+      "waitingResponse": "等待回复",
+      "waitingDescription": "你已批准此匹配。等待 {name} 回复。",
+      "whyMatched": "匹配原因",
+      "talkingPoints": "话题要点",
+      "conversationStarters": "开场白建议",
+      "pass": "跳过",
+      "approve": "批准匹配",
+      "processing": "处理中..."
+    }
   },
   "meetings": {
     "title": "会议",
@@ -210,11 +249,58 @@
       "completed": "已完成",
       "noShow": "未出席",
       "cancelled": "已取消",
-      "needsFeedback": "需要反馈"
+      "needsFeedback": "需要反馈",
+      "upcoming": "即将开始"
+    },
+    "time": {
+      "today": "今天 {time}",
+      "tomorrow": "明天 {time}"
     },
     "join": "加入",
     "giveFeedback": "提供反馈",
-    "empty": "暂无会议"
+    "empty": "暂无会议",
+    "emptyDescription": "当你确认匹配后，会议将自动安排。",
+    "viewMatches": "查看你的匹配"
+  },
+  "feedback": {
+    "title": "会议反馈",
+    "alreadySubmitted": "反馈已提交",
+    "thanksMessage": "感谢你的反馈！",
+    "backToMeetings": "返回会议列表",
+    "notFound": "会议未找到",
+    "notAuthorized": "无权访问",
+    "didMeetQuestion": "你们完成了这次会议吗？",
+    "yesMet": "是的，我们见面了",
+    "didNotMeet": "没有见面",
+    "ratingQuestion": "这次会面怎么样？",
+    "ratingLabels": {
+      "0": "点击星星评分",
+      "1": "不太好",
+      "2": "一般",
+      "3": "还不错",
+      "4": "很好",
+      "5": "非常棒！"
+    },
+    "wouldMeetAgainQuestion": "你愿意再次见面吗？",
+    "wouldMeetAgainYes": "愿意",
+    "wouldMeetAgainNo": "不太想",
+    "highlightsQuestion": "这次会面的亮点是什么？（可多选）",
+    "highlights": {
+      "great_conversation": "很棒的对话",
+      "shared_interests": "共同兴趣",
+      "valuable_insights": "有价值的见解",
+      "potential_collaboration": "合作机会",
+      "friendly_vibe": "友好氛围",
+      "learned_something": "学到新东西"
+    },
+    "notesQuestion": "其他想说的（可选）",
+    "notesQuestionNoShow": "发生了什么？（可选）",
+    "notesPlaceholder": "分享你的想法...",
+    "notesPlaceholderNoShow": "告诉我们为什么没有见面...",
+    "selectDidMeet": "请选择是否完成了会议",
+    "submitError": "提交失败",
+    "submitting": "提交中...",
+    "submit": "提交反馈"
   },
   "onboarding": {
     "greeting": "嗨 {name}！我是 Nomi，你的 AI 助手 👋",
@@ -245,7 +331,90 @@
     "profileError": "创建档案时出现问题。请重试。",
     "placeholder": "输入消息...",
     "placeholderCreating": "正在创建你的档案...",
-    "send": "发送"
+    "send": "发送",
+    "skip": "跳过",
+    "next": "下一步",
+    "back": "返回",
+    "complete": "完成",
+    "steps": {
+      "linkedin": "LinkedIn",
+      "birth": "出生信息",
+      "education": "教育经历",
+      "work": "工作经历"
+    },
+    "linkedin": {
+      "title": "从 LinkedIn 导入",
+      "description": "输入你的 LinkedIn 个人主页链接，自动填充教育和工作经历",
+      "placeholder": "https://linkedin.com/in/your-profile",
+      "import": "导入资料",
+      "importing": "导入中...",
+      "importSuccess": "导入成功！数据已填充到后续步骤。",
+      "invalidUrl": "请输入有效的 LinkedIn 个人主页链接（例如：https://linkedin.com/in/your-profile）",
+      "importConflict": {
+        "title": "数据已存在",
+        "description": "你已有 {existing} 条记录。LinkedIn 有 {importing} 条记录待导入。",
+        "existingEducation": "{count} 条教育记录",
+        "existingWork": "{count} 条工作记录",
+        "replace": "替换全部",
+        "merge": "合并数据",
+        "cancel": "取消"
+      }
+    },
+    "birth": {
+      "title": "出生信息",
+      "description": "告诉我们你的出生日期和地点",
+      "dateLabel": "出生日期",
+      "dateTemplate": "我出生于（{year}）年（{month}）月（{day}）日",
+      "placeLabel": "出生地",
+      "placeTemplate": "在（{province}）（{city}）",
+      "provincePlaceholder": "省份",
+      "cityPlaceholder": "城市"
+    },
+    "education": {
+      "title": "教育经历",
+      "description": "记录你的求学历程（可选填）",
+      "types": {
+        "kindergarten": "幼儿园",
+        "elementary": "小学",
+        "middle_school": "初中",
+        "high_school": "高中",
+        "university": "大学"
+      },
+      "periodTemplate": "从（{startYear}）年到（{endYear}）年",
+      "locationTemplate": "在（{province}）（{city}）（{school}）读书",
+      "majorTemplate": "专业：（{major}）",
+      "schoolPlaceholder": "学校名称",
+      "majorPlaceholder": "专业名称"
+    },
+    "work": {
+      "title": "工作经历",
+      "description": "记录你的职业历程（可选填）",
+      "experienceLabel": "工作经历",
+      "periodTemplate": "从（{startYear}）年到（{endYear}）年",
+      "periodCurrentTemplate": "从（{startYear}）年至今",
+      "currentJob": "目前在职",
+      "locationTemplate": "在（{province}）（{city}）",
+      "companyTemplate": "在（{company}）担任（{position}）",
+      "companyPlaceholder": "公司名称",
+      "positionPlaceholder": "职位名称",
+      "descriptionLabel": "工作描述（可选）",
+      "descriptionPlaceholder": "简要描述你的工作内容...",
+      "addExperience": "添加工作经历"
+    },
+    "complete": {
+      "title": "太棒了！你的时间线已生成",
+      "description": "以下是你的人生时间线预览，你可以随时在仪表盘中编辑",
+      "generating": "正在生成你的时间线...",
+      "present": "至今",
+      "goToDashboard": "前往仪表盘"
+    },
+    "timeline": {
+      "birth": "出生"
+    },
+    "errors": {
+      "emptyProfile": "请至少添加一项信息后再完成。",
+      "completeFailed": "完成设置失败，请重试。"
+    }
   },
   "chat": {
     "welcomeBack": "欢迎回来！我是 Nomi，你的 AI 助手 👋",
@@ -254,6 +423,41 @@
     "send": "发送",
     "error": "抱歉，出错了。请重试。",
     "saveError": "保存失败。请重试。"
+  },
+  "timeline": {
+    "title": "人生时间线",
+    "addEvent": "添加事件",
+    "eventType": "事件类型",
+    "types": {
+      "birth": "出生",
+      "education_kindergarten": "幼儿园",
+      "education_elementary": "小学",
+      "education_middle_school": "初中",
+      "education_high_school": "高中",
+      "education_university": "大学",
+      "work": "工作",
+      "custom": "自定义"
+    },
+    "title": "标题",
+    "titlePlaceholder": "事件标题",
+    "startYear": "开始年份",
+    "endYear": "结束年份",
+    "isCurrent": "进行中",
+    "province": "省份",
+    "provincePlaceholder": "省份",
+    "city": "城市",
+    "cityPlaceholder": "城市",
+    "school": "学校",
+    "schoolPlaceholder": "学校名称",
+    "company": "公司",
+    "companyPlaceholder": "公司名称",
+    "position": "职位",
+    "positionPlaceholder": "职位名称",
+    "description": "描述",
+    "descriptionPlaceholder": "事件描述（可选）",
+    "cancel": "取消",
+    "add": "添加",
+    "adding": "添加中..."
   },
   "metadata": {
     "title": "Nomi - 你的数字世界手册",

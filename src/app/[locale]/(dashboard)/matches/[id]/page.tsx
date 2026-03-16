@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 interface MatchData {
   id: string;
@@ -27,6 +28,8 @@ export default function MatchDetailPage() {
   const router = useRouter();
   const params = useParams();
   const matchId = params.id as string;
+  const locale = params.locale as string;
+  const t = useTranslations();
 
   const [match, setMatch] = useState<MatchData | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export default function MatchDetailPage() {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/login');
+        router.push(`/${locale}/login`);
         return;
       }
       setCurrentUserId(user.id);
@@ -132,9 +135,9 @@ export default function MatchDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-slate-900 mb-2">{error || 'Match not found'}</h1>
-          <Link href="/matches" className="text-blue-600 hover:underline">
-            Back to matches
+          <h1 className="text-xl font-semibold text-slate-900 mb-2">{error || t('matches.detail.notFound')}</h1>
+          <Link href={`/${locale}/matches`} className="text-blue-600 hover:underline">
+            {t('matches.detail.back')}
           </Link>
         </div>
       </div>
@@ -154,12 +157,7 @@ export default function MatchDetailPage() {
     myApproved === null;
 
   const getIntentLabel = (intent: string) => {
-    switch (intent) {
-      case 'professional': return '💼 Professional';
-      case 'dating': return '💕 Dating';
-      case 'friendship': return '🤝 Friendship';
-      default: return intent;
-    }
+    return t(`profile.intents.${intent}`);
   };
 
   const getReasonIcon = (type: string) => {
@@ -181,12 +179,12 @@ export default function MatchDetailPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/matches" className="text-slate-500 hover:text-slate-700">
+          <Link href={`/${locale}/matches`} className="text-slate-500 hover:text-slate-700">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-lg font-semibold text-slate-900">Match Details</h1>
+          <h1 className="text-lg font-semibold text-slate-900">{t('matches.detail.title')}</h1>
         </div>
       </header>
 
@@ -222,11 +220,11 @@ export default function MatchDetailPage() {
 
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-green-600 font-medium">
-                  {Math.round(match.match_score * 100)}% match
+                  {t('matches.detail.matchScore', { score: Math.round(match.match_score * 100) })}
                 </span>
                 {!isExpired && canTakeAction && (
                   <span className="text-amber-600">
-                    {hoursLeft}h left to respond
+                    {t('matches.detail.hoursLeft', { hours: hoursLeft })}
                   </span>
                 )}
               </div>
@@ -239,9 +237,9 @@ export default function MatchDetailPage() {
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-green-900">Meeting Scheduled!</h3>
+                <h3 className="font-semibold text-green-900">{t('matches.detail.meetingScheduled')}</h3>
                 <p className="text-green-700 text-sm">
-                  {new Date(meeting.scheduled_at).toLocaleString('en-US', {
+                  {new Date(meeting.scheduled_at).toLocaleString(locale, {
                     weekday: 'long',
                     month: 'long',
                     day: 'numeric',
@@ -256,7 +254,7 @@ export default function MatchDetailPage() {
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
               >
-                Join Meeting
+                {t('matches.detail.joinMeeting')}
               </a>
             </div>
           </div>
@@ -264,35 +262,29 @@ export default function MatchDetailPage() {
 
         {match.status === 'half_approved' && myApproved && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-amber-900">Waiting for response</h3>
+            <h3 className="font-semibold text-amber-900">{t('matches.detail.waitingResponse')}</h3>
             <p className="text-amber-700 text-sm">
-              You&apos;ve approved this match. Waiting for {otherUser?.name} to respond.
+              {t('matches.detail.waitingDescription', { name: otherUser?.name })}
             </p>
           </div>
         )}
 
         {match.status === 'rejected' && (
           <div className="bg-slate-100 border border-slate-200 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-slate-700">Match Declined</h3>
-            <p className="text-slate-600 text-sm">
-              This match was declined.
-            </p>
+            <h3 className="font-semibold text-slate-700">{t('matches.status.declined')}</h3>
           </div>
         )}
 
         {match.status === 'expired' && (
           <div className="bg-slate-100 border border-slate-200 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-slate-700">Match Expired</h3>
-            <p className="text-slate-600 text-sm">
-              This match expired before both parties responded.
-            </p>
+            <h3 className="font-semibold text-slate-700">{t('matches.status.expired')}</h3>
           </div>
         )}
 
         {/* Why We Matched You */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">
-            Why we matched you
+            {t('matches.detail.whyMatched')}
           </h3>
           <div className="space-y-3">
             {match.match_reasons?.map((reason, index) => (
@@ -308,7 +300,7 @@ export default function MatchDetailPage() {
         {otherAgent?.talking_points && otherAgent.talking_points.length > 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">
-              Talking Points
+              {t('matches.detail.talkingPoints')}
             </h3>
             <ul className="space-y-2">
               {otherAgent.talking_points.map((point, index) => (
@@ -325,7 +317,7 @@ export default function MatchDetailPage() {
         {otherAgent?.conversation_starters && otherAgent.conversation_starters.length > 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">
-              Conversation Starters
+              {t('matches.detail.conversationStarters')}
             </h3>
             <div className="space-y-2">
               {otherAgent.conversation_starters.map((starter, index) => (
@@ -349,14 +341,14 @@ export default function MatchDetailPage() {
                 disabled={actionLoading}
                 className="flex-1 py-3 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition disabled:opacity-50"
               >
-                Pass
+                {t('matches.detail.pass')}
               </button>
               <button
                 onClick={() => handleAction('approve')}
                 disabled={actionLoading}
                 className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {actionLoading ? 'Processing...' : 'Approve Match'}
+                {actionLoading ? t('matches.detail.processing') : t('matches.detail.approve')}
               </button>
             </div>
           </div>

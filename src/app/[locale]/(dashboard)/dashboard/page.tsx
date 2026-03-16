@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { DashboardTimeline } from './DashboardTimeline';
+import type { TimelineEvent } from '@/types/database';
 
 export default async function DashboardPage({
   params,
@@ -56,6 +58,13 @@ export default async function DashboardPage({
     .gte('scheduled_at', new Date().toISOString())
     .order('scheduled_at', { ascending: true })
     .limit(3);
+
+  // Fetch timeline events
+  const { data: timelineEvents } = await supabase
+    .from('timeline_events')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('start_year', { ascending: true });
 
   const hasProfile = !!profile;
   const isProfileActive = profile?.is_active;
@@ -154,7 +163,7 @@ export default async function DashboardPage({
               { value: profile?.agent_profiles?.length || 0, label: t('dashboard.stats.activeAgents'), color: 'blue', href: `/${locale}/profile` },
               { value: matches?.length || 0, label: t('dashboard.stats.pendingMatches'), color: 'teal', href: `/${locale}/matches` },
               { value: meetings?.length || 0, label: t('dashboard.stats.upcomingMeetings'), color: 'orange', href: `/${locale}/meetings` },
-              { value: profile?.intents?.length || 0, label: 'Relationship Types', color: 'purple', href: `/${locale}/profile` },
+              { value: profile?.intents?.length || 0, label: t('profile.sections.openToConnect'), color: 'purple', href: `/${locale}/profile` },
             ].map((stat, i) => {
               const colors: Record<string, string> = {
                 blue: 'bg-[#0077cc]/5 border-[#0077cc]/10 hover:border-[#0077cc]/20',
@@ -332,6 +341,11 @@ export default async function DashboardPage({
               })}
             </div>
           </div>
+        )}
+
+        {/* Timeline Section */}
+        {hasProfile && (
+          <DashboardTimeline initialEvents={(timelineEvents || []) as TimelineEvent[]} />
         )}
       </main>
     </div>

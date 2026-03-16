@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 interface MeetingData {
   id: string;
@@ -19,6 +20,8 @@ export default function FeedbackPage() {
   const router = useRouter();
   const params = useParams();
   const meetingId = params.id as string;
+  const locale = params.locale as string;
+  const t = useTranslations();
 
   const [meeting, setMeeting] = useState<MeetingData | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -35,12 +38,12 @@ export default function FeedbackPage() {
   const [notes, setNotes] = useState('');
 
   const highlightOptions = [
-    { value: 'great_conversation', label: '很棒的对话' },
-    { value: 'shared_interests', label: '共同兴趣' },
-    { value: 'valuable_insights', label: '有价值的见解' },
-    { value: 'potential_collaboration', label: '合作机会' },
-    { value: 'friendly_vibe', label: '友好氛围' },
-    { value: 'learned_something', label: '学到新东西' },
+    { value: 'great_conversation', label: t('feedback.highlights.great_conversation') },
+    { value: 'shared_interests', label: t('feedback.highlights.shared_interests') },
+    { value: 'valuable_insights', label: t('feedback.highlights.valuable_insights') },
+    { value: 'potential_collaboration', label: t('feedback.highlights.potential_collaboration') },
+    { value: 'friendly_vibe', label: t('feedback.highlights.friendly_vibe') },
+    { value: 'learned_something', label: t('feedback.highlights.learned_something') },
   ];
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function FeedbackPage() {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/login');
+        router.push(`/${locale}/login`);
         return;
       }
       setCurrentUserId(user.id);
@@ -80,14 +83,14 @@ export default function FeedbackPage() {
         .single();
 
       if (error || !data) {
-        setError('会议未找到');
+        setError(t('feedback.notFound'));
         setLoading(false);
         return;
       }
 
       // Verify user is part of this meeting
       if (data.user_a_id !== user.id && data.user_b_id !== user.id) {
-        setError('无权访问');
+        setError(t('feedback.notAuthorized'));
         setLoading(false);
         return;
       }
@@ -97,12 +100,12 @@ export default function FeedbackPage() {
     };
 
     fetchMeeting();
-  }, [meetingId, router]);
+  }, [meetingId, router, locale, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (didMeet === null) {
-      setError('请选择是否完成了会议');
+      setError(t('feedback.selectDidMeet'));
       return;
     }
 
@@ -129,12 +132,12 @@ export default function FeedbackPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '提交失败');
+        throw new Error(data.error || t('feedback.submitError'));
       }
 
-      router.push('/meetings?feedback=success');
+      router.push(`/${locale}/meetings?feedback=success`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '提交失败');
+      setError(err instanceof Error ? err.message : t('feedback.submitError'));
       setSubmitting(false);
     }
   };
@@ -156,10 +159,10 @@ export default function FeedbackPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-xl font-semibold text-slate-900 mb-2">反馈已提交</h1>
-          <p className="text-slate-600 mb-4">感谢您的反馈！</p>
-          <Link href="/meetings" className="text-blue-600 hover:underline">
-            返回会议列表
+          <h1 className="text-xl font-semibold text-slate-900 mb-2">{t('feedback.alreadySubmitted')}</h1>
+          <p className="text-slate-600 mb-4">{t('feedback.thanksMessage')}</p>
+          <Link href={`/${locale}/meetings`} className="text-blue-600 hover:underline">
+            {t('feedback.backToMeetings')}
           </Link>
         </div>
       </div>
@@ -171,8 +174,8 @@ export default function FeedbackPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-xl font-semibold text-slate-900 mb-2">{error}</h1>
-          <Link href="/meetings" className="text-blue-600 hover:underline">
-            返回会议列表
+          <Link href={`/${locale}/meetings`} className="text-blue-600 hover:underline">
+            {t('feedback.backToMeetings')}
           </Link>
         </div>
       </div>
@@ -187,12 +190,12 @@ export default function FeedbackPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/meetings" className="text-slate-500 hover:text-slate-700">
+          <Link href={`/${locale}/meetings`} className="text-slate-500 hover:text-slate-700">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-lg font-semibold text-slate-900">会议反馈</h1>
+          <h1 className="text-lg font-semibold text-slate-900">{t('feedback.title')}</h1>
         </div>
       </header>
 
@@ -216,7 +219,7 @@ export default function FeedbackPage() {
             <div>
               <h2 className="font-semibold text-slate-900">{otherUser?.name || 'Unknown'}</h2>
               <p className="text-sm text-slate-500">
-                {meeting && new Date(meeting.scheduled_at).toLocaleDateString('zh-CN', {
+                {meeting && new Date(meeting.scheduled_at).toLocaleDateString(locale, {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -232,7 +235,7 @@ export default function FeedbackPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Did Meet */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="font-semibold text-slate-900 mb-4">你们完成了这次会议吗？</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">{t('feedback.didMeetQuestion')}</h3>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -243,7 +246,7 @@ export default function FeedbackPage() {
                     : 'border-slate-200 text-slate-600 hover:border-slate-300'
                 }`}
               >
-                是的，我们见面了
+                {t('feedback.yesMet')}
               </button>
               <button
                 type="button"
@@ -254,7 +257,7 @@ export default function FeedbackPage() {
                     : 'border-slate-200 text-slate-600 hover:border-slate-300'
                 }`}
               >
-                没有见面
+                {t('feedback.didNotMeet')}
               </button>
             </div>
           </div>
@@ -263,7 +266,7 @@ export default function FeedbackPage() {
           {didMeet === true && (
             <>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-4">这次会面怎么样？</h3>
+                <h3 className="font-semibold text-slate-900 mb-4">{t('feedback.ratingQuestion')}</h3>
                 <div className="flex justify-center gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -285,18 +288,13 @@ export default function FeedbackPage() {
                   ))}
                 </div>
                 <p className="text-center text-sm text-slate-500 mt-2">
-                  {rating === 0 && '点击星星评分'}
-                  {rating === 1 && '不太好'}
-                  {rating === 2 && '一般'}
-                  {rating === 3 && '还不错'}
-                  {rating === 4 && '很好'}
-                  {rating === 5 && '非常棒！'}
+                  {t(`feedback.ratingLabels.${rating}`)}
                 </p>
               </div>
 
               {/* Would Meet Again */}
               <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-4">你愿意再次见面吗？</h3>
+                <h3 className="font-semibold text-slate-900 mb-4">{t('feedback.wouldMeetAgainQuestion')}</h3>
                 <div className="flex gap-4">
                   <button
                     type="button"
@@ -307,7 +305,7 @@ export default function FeedbackPage() {
                         : 'border-slate-200 text-slate-600 hover:border-slate-300'
                     }`}
                   >
-                    愿意
+                    {t('feedback.wouldMeetAgainYes')}
                   </button>
                   <button
                     type="button"
@@ -318,14 +316,14 @@ export default function FeedbackPage() {
                         : 'border-slate-200 text-slate-600 hover:border-slate-300'
                     }`}
                   >
-                    不太想
+                    {t('feedback.wouldMeetAgainNo')}
                   </button>
                 </div>
               </div>
 
               {/* Highlights */}
               <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-4">这次会面的亮点是什么？（可多选）</h3>
+                <h3 className="font-semibold text-slate-900 mb-4">{t('feedback.highlightsQuestion')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {highlightOptions.map((option) => (
                     <button
@@ -355,12 +353,12 @@ export default function FeedbackPage() {
           {/* Notes */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h3 className="font-semibold text-slate-900 mb-4">
-              {didMeet === false ? '发生了什么？（可选）' : '其他想说的（可选）'}
+              {didMeet === false ? t('feedback.notesQuestionNoShow') : t('feedback.notesQuestion')}
             </h3>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={didMeet === false ? '告诉我们为什么没有见面...' : '分享你的想法...'}
+              placeholder={didMeet === false ? t('feedback.notesPlaceholderNoShow') : t('feedback.notesPlaceholder')}
               rows={4}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
@@ -379,7 +377,7 @@ export default function FeedbackPage() {
             disabled={submitting || didMeet === null}
             className="w-full py-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? '提交中...' : '提交反馈'}
+            {submitting ? t('feedback.submitting') : t('feedback.submit')}
           </button>
         </form>
       </main>

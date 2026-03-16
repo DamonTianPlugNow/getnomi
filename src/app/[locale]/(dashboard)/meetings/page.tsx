@@ -1,16 +1,23 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
-export default async function MeetingsPage() {
+export default async function MeetingsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(`/${locale}/login`);
   }
 
   const { data: meetings } = await supabase
@@ -41,32 +48,33 @@ export default async function MeetingsPage() {
 
   const getStatusBadge = (meeting: typeof meetings extends (infer T)[] | null ? T : never) => {
     if (meeting.status === 'completed') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">Completed</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">{t('meetings.status.completed')}</span>;
     }
     if (meeting.status === 'no_show') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#eb5757]/10 text-[#eb5757]">No Show</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#eb5757]/10 text-[#eb5757]">{t('meetings.status.noShow')}</span>;
     }
     if (meeting.status === 'cancelled') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Cancelled</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">{t('meetings.status.cancelled')}</span>;
     }
     if (new Date(meeting.scheduled_at) <= now) {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">Needs feedback</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">{t('meetings.status.needsFeedback')}</span>;
     }
-    return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">Upcoming</span>;
+    return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">{t('meetings.status.upcoming')}</span>;
   };
 
   const formatMeetingTime = (dateStr: string) => {
     const date = new Date(dateStr);
     const isToday = date.toDateString() === now.toDateString();
     const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+    const timeStr = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
     if (isToday) {
-      return `Today at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+      return t('meetings.time.today', { time: timeStr });
     }
     if (isTomorrow) {
-      return `Tomorrow at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+      return t('meetings.time.tomorrow', { time: timeStr });
     }
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -76,15 +84,15 @@ export default async function MeetingsPage() {
   };
 
   const getIntentBadge = (intent: string) => {
-    const config: Record<string, { emoji: string; bg: string; text: string }> = {
-      professional: { emoji: '💼', bg: 'bg-[#0077cc]/10', text: 'text-[#0077cc]' },
-      dating: { emoji: '💕', bg: 'bg-[#eb5757]/10', text: 'text-[#eb5757]' },
-      friendship: { emoji: '🤝', bg: 'bg-[#0f7b6c]/10', text: 'text-[#0f7b6c]' },
+    const config: Record<string, { bg: string; text: string }> = {
+      professional: { bg: 'bg-[#0077cc]/10', text: 'text-[#0077cc]' },
+      dating: { bg: 'bg-[#eb5757]/10', text: 'text-[#eb5757]' },
+      friendship: { bg: 'bg-[#0f7b6c]/10', text: 'text-[#0f7b6c]' },
     };
     const c = config[intent] || config.friendship;
     return (
       <span className={`px-2 py-0.5 text-xs font-medium rounded ${c.bg} ${c.text}`}>
-        {c.emoji} {intent}
+        {t(`profile.intents.${intent}`)}
       </span>
     );
   };
@@ -142,15 +150,15 @@ export default async function MeetingsPage() {
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-[#0077cc] hover:bg-[#0066b3] text-white text-sm font-medium rounded-md transition-colors"
               >
-                Join
+                {t('meetings.join')}
               </a>
             )}
             {needsFeedback && (
               <Link
-                href={`/meetings/${meeting.id}/feedback`}
+                href={`/${locale}/meetings/${meeting.id}/feedback`}
                 className="px-4 py-2 bg-[#f7c94b] hover:bg-[#e5b93e] text-[#37352f] text-sm font-medium rounded-md transition-colors"
               >
-                Give feedback
+                {t('meetings.giveFeedback')}
               </Link>
             )}
           </div>
@@ -164,7 +172,7 @@ export default async function MeetingsPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#e3e2de]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
               <span className="text-white font-bold text-sm">N</span>
             </div>
@@ -172,14 +180,14 @@ export default async function MeetingsPage() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Dashboard
+            <Link href={`/${locale}/dashboard`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.dashboard')}
             </Link>
-            <Link href="/matches" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Matches
+            <Link href={`/${locale}/matches`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.matches')}
             </Link>
-            <Link href="/profile" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Profile
+            <Link href={`/${locale}/profile`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.profile')}
             </Link>
           </nav>
         </div>
@@ -187,15 +195,15 @@ export default async function MeetingsPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#37352f] mb-2">Meetings</h1>
-          <p className="text-[#37352f]/60">Your scheduled and past meetings</p>
+          <h1 className="text-3xl font-bold text-[#37352f] mb-2">{t('meetings.title')}</h1>
+          <p className="text-[#37352f]/60">{t('meetings.subtitle')}</p>
         </div>
 
         {/* Upcoming Meetings */}
         {upcomingMeetings.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
-              Upcoming ({upcomingMeetings.length})
+              {t('meetings.tabs.upcoming')} ({upcomingMeetings.length})
             </h2>
             <div className="space-y-3">
               {upcomingMeetings.map((meeting) => (
@@ -209,7 +217,7 @@ export default async function MeetingsPage() {
         {pastMeetings.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
-              Past ({pastMeetings.length})
+              {t('meetings.tabs.past')} ({pastMeetings.length})
             </h2>
             <div className="space-y-3">
               {pastMeetings.map((meeting) => (
@@ -227,15 +235,15 @@ export default async function MeetingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-[#37352f] mb-2">No meetings yet</h3>
+            <h3 className="text-lg font-semibold text-[#37352f] mb-2">{t('meetings.empty')}</h3>
             <p className="text-[#37352f]/60 mb-6 max-w-sm mx-auto">
-              When you confirm a match, a meeting will be automatically scheduled.
+              {t('meetings.emptyDescription')}
             </p>
             <Link
-              href="/matches"
+              href={`/${locale}/matches`}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
-              View your matches
+              {t('meetings.viewMatches')}
             </Link>
           </div>
         )}

@@ -1,6 +1,70 @@
 import { z } from 'zod';
 
 // ===============================
+// Onboarding Schemas
+// ===============================
+
+// LinkedIn URL regex: supports various formats
+// Examples: https://linkedin.com/in/john-doe, https://www.linkedin.com/in/john-doe/
+const linkedinUrlRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/[\w\-]{3,100}\/?$/i;
+
+export const linkedinUrlSchema = z
+  .string()
+  .trim()
+  .refine((url) => !url || linkedinUrlRegex.test(url), {
+    message: 'Invalid LinkedIn profile URL format. Expected: https://linkedin.com/in/your-profile',
+  })
+  .optional();
+
+export const timelineEventInputSchema = z.object({
+  event_type: z.enum([
+    'birth',
+    'education_kindergarten',
+    'education_elementary',
+    'education_middle_school',
+    'education_high_school',
+    'education_university',
+    'work',
+    'custom',
+  ]),
+  start_year: z.number().int().min(1900).max(2100).optional(),
+  start_month: z.number().int().min(1).max(12).optional(),
+  start_day: z.number().int().min(1).max(31).optional(),
+  end_year: z.number().int().min(1900).max(2100).optional(),
+  end_month: z.number().int().min(1).max(12).optional(),
+  is_current: z.boolean().optional(),
+  province: z.string().max(100).optional(),
+  city: z.string().max(100).optional(),
+  title: z.string().min(1).max(200),
+  institution: z.string().max(200).optional(),
+  position: z.string().max(200).optional(),
+  description: z.string().max(2000).optional(),
+  source: z.enum(['manual', 'linkedin', 'onboarding']).optional(),
+});
+
+export const onboardingCompleteSchema = z.object({
+  linkedinUrl: linkedinUrlSchema,
+  birthDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Expected: YYYY-MM-DD')
+    .optional(),
+  birthProvince: z.string().max(50).optional(),
+  birthCity: z.string().max(50).optional(),
+  timelineEvents: z.array(timelineEventInputSchema),
+});
+
+export type TimelineEventInput = z.infer<typeof timelineEventInputSchema>;
+export type OnboardingCompleteInput = z.infer<typeof onboardingCompleteSchema>;
+
+/**
+ * Validates a LinkedIn URL
+ */
+export function isValidLinkedInUrl(url: string): boolean {
+  if (!url) return false;
+  return linkedinUrlRegex.test(url.trim());
+}
+
+// ===============================
 // Profile Schemas
 // ===============================
 

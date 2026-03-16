@@ -162,9 +162,22 @@
     "title": "프로필",
     "updateWithAI": "AI로 업데이트",
     "exportMd": ".md 내보내기",
+    "exporting": "내보내는 중...",
     "matching": "매칭",
+    "matchingOn": "매칭 켜짐",
+    "matchingOff": "매칭 꺼짐",
+    "updating": "업데이트 중...",
     "on": "켜기",
     "off": "끄기",
+    "noProfile": "프로필이 없습니다",
+    "noProfileDescription": "시작하려면 프로필을 만드세요",
+    "createProfile": "프로필 만들기",
+    "profileNotFound": "프로필을 찾을 수 없습니다",
+    "loadError": "프로필 로드 실패",
+    "exportError": "프로필 내보내기 실패",
+    "updateError": "매칭 상태 업데이트 실패",
+    "signOut": "로그아웃",
+    "yourAgents": "당신의 AI 에이전트",
     "sections": {
       "skills": "기술",
       "interests": "관심사",
@@ -196,7 +209,27 @@
       "expired": "만료됨",
       "meetingScheduled": "미팅 예정"
     },
-    "empty": "아직 매칭이 없습니다"
+    "empty": "아직 매칭이 없습니다",
+    "emptyDescription": "완벽한 매칭을 찾고 있습니다. 나중에 다시 확인해 주세요!",
+    "updateProfile": "프로필 업데이트",
+    "detail": {
+      "title": "매칭 상세",
+      "back": "매칭 목록으로",
+      "notFound": "매칭을 찾을 수 없습니다",
+      "notAuthorized": "접근 권한이 없습니다",
+      "matchScore": "{score}% 매칭",
+      "hoursLeft": "응답까지 {hours}시간 남음",
+      "meetingScheduled": "미팅 예정!",
+      "joinMeeting": "미팅 참여",
+      "waitingResponse": "응답 대기 중",
+      "waitingDescription": "이 매칭을 승인했습니다. {name}의 응답을 기다리고 있습니다.",
+      "whyMatched": "매칭 이유",
+      "talkingPoints": "대화 포인트",
+      "conversationStarters": "대화 시작하기",
+      "pass": "패스",
+      "approve": "매칭 승인",
+      "processing": "처리 중..."
+    }
   },
   "meetings": {
     "title": "미팅",
@@ -210,11 +243,58 @@
       "completed": "완료됨",
       "noShow": "불참",
       "cancelled": "취소됨",
-      "needsFeedback": "피드백 필요"
+      "needsFeedback": "피드백 필요",
+      "upcoming": "곧 시작"
+    },
+    "time": {
+      "today": "오늘 {time}",
+      "tomorrow": "내일 {time}"
     },
     "join": "참여",
     "giveFeedback": "피드백 하기",
-    "empty": "아직 미팅이 없습니다"
+    "empty": "아직 미팅이 없습니다",
+    "emptyDescription": "매칭을 확인하면 미팅이 자동으로 예약됩니다.",
+    "viewMatches": "매칭 보기"
+  },
+  "feedback": {
+    "title": "미팅 피드백",
+    "alreadySubmitted": "피드백이 이미 제출됨",
+    "thanksMessage": "피드백 감사합니다!",
+    "backToMeetings": "미팅 목록으로 돌아가기",
+    "notFound": "미팅을 찾을 수 없습니다",
+    "notAuthorized": "접근 권한이 없습니다",
+    "didMeetQuestion": "이 미팅을 완료했나요?",
+    "yesMet": "네, 만났어요",
+    "didNotMeet": "만나지 못했어요",
+    "ratingQuestion": "미팅은 어땠나요?",
+    "ratingLabels": {
+      "0": "별을 탭하여 평가",
+      "1": "별로였어요",
+      "2": "그저 그랬어요",
+      "3": "좋았어요",
+      "4": "아주 좋았어요",
+      "5": "최고였어요!"
+    },
+    "wouldMeetAgainQuestion": "다시 만나고 싶으신가요?",
+    "wouldMeetAgainYes": "네",
+    "wouldMeetAgainNo": "아니요",
+    "highlightsQuestion": "하이라이트는 무엇이었나요? (복수 선택 가능)",
+    "highlights": {
+      "great_conversation": "훌륭한 대화",
+      "shared_interests": "공통 관심사",
+      "valuable_insights": "가치있는 인사이트",
+      "potential_collaboration": "협업 가능성",
+      "friendly_vibe": "친근한 분위기",
+      "learned_something": "배운 것이 있음"
+    },
+    "notesQuestion": "기타 (선택사항)",
+    "notesQuestionNoShow": "무슨 일이 있었나요? (선택사항)",
+    "notesPlaceholder": "생각을 공유해 주세요...",
+    "notesPlaceholderNoShow": "만나지 못한 이유를 알려주세요...",
+    "selectDidMeet": "미팅이 이루어졌는지 선택해 주세요",
+    "submitError": "제출 실패",
+    "submitting": "제출 중...",
+    "submit": "피드백 제출"
   },
   "onboarding": {
     "greeting": "안녕하세요 {name}님! 저는 Nomi, 당신의 AI 어시스턴트입니다 👋",
@@ -245,7 +325,90 @@
     "profileError": "프로필 생성 중 문제가 발생했습니다. 다시 시도해 주세요.",
     "placeholder": "메시지를 입력하세요...",
     "placeholderCreating": "프로필 생성 중...",
-    "send": "보내기"
+    "send": "보내기",
+    "skip": "건너뛰기",
+    "next": "다음",
+    "back": "뒤로",
+    "complete": "완료",
+    "steps": {
+      "linkedin": "LinkedIn",
+      "birth": "생년월일",
+      "education": "학력",
+      "work": "경력"
+    },
+    "linkedin": {
+      "title": "LinkedIn에서 가져오기",
+      "description": "LinkedIn 프로필 URL을 입력하면 학력과 경력이 자동으로 입력됩니다",
+      "placeholder": "https://linkedin.com/in/your-profile",
+      "import": "프로필 가져오기",
+      "importing": "가져오는 중...",
+      "importSuccess": "가져오기 성공! 다음 단계에 데이터가 입력되었습니다.",
+      "invalidUrl": "유효한 LinkedIn 프로필 URL을 입력하세요 (예: https://linkedin.com/in/your-profile)",
+      "importConflict": {
+        "title": "데이터가 이미 존재합니다",
+        "description": "이미 {existing}개의 데이터가 있습니다. LinkedIn에서 {importing}개의 데이터를 가져올 수 있습니다.",
+        "existingEducation": "{count}개의 학력 데이터",
+        "existingWork": "{count}개의 경력 데이터",
+        "replace": "모두 교체",
+        "merge": "병합하기",
+        "cancel": "취소"
+      }
+    },
+    "birth": {
+      "title": "생년월일 정보",
+      "description": "생년월일과 출생지를 알려주세요",
+      "dateLabel": "생년월일",
+      "dateTemplate": "({year})년 ({month})월 ({day})일 출생",
+      "placeLabel": "출생지",
+      "placeTemplate": "({province}) ({city})",
+      "provincePlaceholder": "시/도",
+      "cityPlaceholder": "시/군/구"
+    },
+    "education": {
+      "title": "학력",
+      "description": "학력을 기록하세요 (선택사항)",
+      "types": {
+        "kindergarten": "유치원",
+        "elementary": "초등학교",
+        "middle_school": "중학교",
+        "high_school": "고등학교",
+        "university": "대학교"
+      },
+      "periodTemplate": "({startYear})년부터 ({endYear})년까지",
+      "locationTemplate": "({province}) ({city})의 ({school})",
+      "majorTemplate": "전공: ({major})",
+      "schoolPlaceholder": "학교명",
+      "majorPlaceholder": "전공/학과"
+    },
+    "work": {
+      "title": "경력",
+      "description": "경력을 기록하세요 (선택사항)",
+      "experienceLabel": "경력",
+      "periodTemplate": "({startYear})년부터 ({endYear})년까지",
+      "periodCurrentTemplate": "({startYear})년부터 현재까지",
+      "currentJob": "현재 재직 중",
+      "locationTemplate": "({province}) ({city})",
+      "companyTemplate": "({company})에서 ({position})로",
+      "companyPlaceholder": "회사명",
+      "positionPlaceholder": "직책",
+      "descriptionLabel": "설명 (선택사항)",
+      "descriptionPlaceholder": "업무 내용을 간략히...",
+      "addExperience": "경력 추가"
+    },
+    "complete": {
+      "title": "멋져요! 타임라인이 완성되었습니다",
+      "description": "당신의 인생 타임라인 미리보기입니다. 대시보드에서 언제든지 수정할 수 있습니다.",
+      "generating": "타임라인 생성 중...",
+      "present": "현재",
+      "goToDashboard": "대시보드로 이동"
+    },
+    "timeline": {
+      "birth": "출생"
+    },
+    "errors": {
+      "emptyProfile": "완료하기 전에 최소 하나의 정보를 추가해 주세요.",
+      "completeFailed": "완료에 실패했습니다. 다시 시도해 주세요."
+    }
   },
   "chat": {
     "welcomeBack": "다시 오신 것을 환영합니다! 저는 Nomi, 당신의 AI 어시스턴트입니다 👋",

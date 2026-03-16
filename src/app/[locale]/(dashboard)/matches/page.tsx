@@ -1,16 +1,23 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
-export default async function MatchesPage() {
+export default async function MatchesPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(`/${locale}/login`);
   }
 
   const { data: matches } = await supabase
@@ -39,23 +46,23 @@ export default async function MatchesPage() {
     const myApproved = isUserA ? match.user_a_approved : match.user_b_approved;
 
     if (match.status === 'matched') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">Matched</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0f7b6c]/10 text-[#0f7b6c]">{t('matches.status.matched')}</span>;
     }
     if (match.status === 'half_approved') {
       if (myApproved) {
-        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">Waiting</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#f7c94b]/20 text-[#9a6700]">{t('matches.status.waiting')}</span>;
       } else {
-        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">Action needed</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">{t('matches.status.actionNeeded')}</span>;
       }
     }
     if (match.status === 'pending') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">New</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0077cc]/10 text-[#0077cc]">{t('matches.status.new')}</span>;
     }
     if (match.status === 'rejected') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Declined</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">{t('matches.status.declined')}</span>;
     }
     if (match.status === 'expired') {
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">Expired</span>;
+      return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#37352f]/5 text-[#37352f]/50">{t('matches.status.expired')}</span>;
     }
     return null;
   };
@@ -69,7 +76,7 @@ export default async function MatchesPage() {
     const c = config[intent] || config.friendship;
     return (
       <span className={`px-2 py-0.5 text-xs font-medium rounded ${c.bg} ${c.text}`}>
-        {c.emoji} {intent}
+        {c.emoji} {t(`profile.intents.${intent}`)}
       </span>
     );
   };
@@ -82,7 +89,7 @@ export default async function MatchesPage() {
 
     return (
       <Link
-        href={`/matches/${match.id}`}
+        href={`/${locale}/matches/${match.id}`}
         className="block p-5 bg-white rounded-xl border border-[#e3e2de] hover:border-[#0077cc]/30 hover:shadow-sm transition-all"
       >
         <div className="flex items-start gap-4">
@@ -115,7 +122,7 @@ export default async function MatchesPage() {
               {getIntentBadge(match.intent)}
               {hasMeeting && (
                 <span className="px-2 py-0.5 text-xs font-medium rounded bg-[#0f7b6c]/10 text-[#0f7b6c]">
-                  📅 Meeting scheduled
+                  📅 {t('matches.status.meetingScheduled')}
                 </span>
               )}
             </div>
@@ -133,7 +140,7 @@ export default async function MatchesPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#e3e2de]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#37352f] flex items-center justify-center">
               <span className="text-white font-bold text-sm">N</span>
             </div>
@@ -141,27 +148,27 @@ export default async function MatchesPage() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Dashboard
+            <Link href={`/${locale}/dashboard`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.dashboard')}
             </Link>
-            <Link href="/meetings" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Meetings
+            <Link href={`/${locale}/meetings`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.meetings')}
             </Link>
-            <Link href="/profile" className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
-              Profile
+            <Link href={`/${locale}/profile`} className="px-4 py-2 text-sm font-medium text-[#37352f]/60 hover:text-[#37352f] hover:bg-[#f7f6f3] rounded-md transition-colors">
+              {t('nav.profile')}
             </Link>
           </nav>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-[#37352f] mb-8">Your Matches</h1>
+        <h1 className="text-3xl font-bold text-[#37352f] mb-8">{t('matches.title')}</h1>
 
         {/* Pending Matches */}
         {pendingMatches.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
-              Pending ({pendingMatches.length})
+              {t('matches.tabs.pending')} ({pendingMatches.length})
             </h2>
             <div className="space-y-3">
               {pendingMatches.map((match) => (
@@ -175,7 +182,7 @@ export default async function MatchesPage() {
         {confirmedMatches.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
-              Confirmed ({confirmedMatches.length})
+              {t('matches.tabs.confirmed')} ({confirmedMatches.length})
             </h2>
             <div className="space-y-3">
               {confirmedMatches.map((match) => (
@@ -189,7 +196,7 @@ export default async function MatchesPage() {
         {pastMatches.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold text-[#37352f]/50 uppercase tracking-wide mb-4">
-              Past ({pastMatches.length})
+              {t('matches.tabs.past')} ({pastMatches.length})
             </h2>
             <div className="space-y-3">
               {pastMatches.map((match) => (
@@ -207,15 +214,15 @@ export default async function MatchesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-[#37352f] mb-2">No matches yet</h3>
+            <h3 className="text-lg font-semibold text-[#37352f] mb-2">{t('matches.empty')}</h3>
             <p className="text-[#37352f]/60 mb-6 max-w-sm mx-auto">
-              We're working on finding your perfect matches. Check back soon!
+              {t('matches.emptyDescription')}
             </p>
             <Link
-              href="/profile"
+              href={`/${locale}/profile`}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0077cc] hover:bg-[#0066b3] text-white font-medium rounded-md transition-colors"
             >
-              Update your profile
+              {t('matches.updateProfile')}
             </Link>
           </div>
         )}

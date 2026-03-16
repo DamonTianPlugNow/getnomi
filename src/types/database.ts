@@ -12,6 +12,71 @@
 
 export type RelationshipIntent = 'professional' | 'dating' | 'friendship';
 
+// ============================================
+// Timeline Event Types
+// ============================================
+
+export type TimelineEventType =
+  | 'birth'
+  | 'education_kindergarten'
+  | 'education_elementary'
+  | 'education_middle_school'
+  | 'education_high_school'
+  | 'education_university'
+  | 'work'
+  | 'custom';
+
+export type TimelineEventSource = 'manual' | 'linkedin' | 'onboarding';
+
+export interface TimelineEvent {
+  id: string;
+  user_id: string;
+
+  // Event type and timing
+  event_type: TimelineEventType;
+  start_year: number | null;
+  start_month: number | null;
+  start_day: number | null;
+  end_year: number | null;
+  end_month: number | null;
+  is_current: boolean;
+
+  // Location
+  province: string | null;
+  city: string | null;
+
+  // Event details
+  title: string;
+  institution: string | null;
+  position: string | null;
+  description: string | null;
+
+  // Data source
+  source: TimelineEventSource;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTimelineEventInput {
+  event_type: TimelineEventType;
+  start_year?: number;
+  start_month?: number;
+  start_day?: number;
+  end_year?: number;
+  end_month?: number;
+  is_current?: boolean;
+  province?: string;
+  city?: string;
+  title: string;
+  institution?: string;
+  position?: string;
+  description?: string;
+  source?: TimelineEventSource;
+}
+
+export interface UpdateTimelineEventInput extends Partial<CreateTimelineEventInput> {}
+
 export type MatchStatus =
   | 'pending'        // Initial state, waiting for both to confirm
   | 'half_approved'  // One party approved
@@ -52,6 +117,12 @@ export interface MemoryProfile {
   headline: string | null;
   location: string | null;
 
+  // Birth info (timeline)
+  linkedin_url: string | null;
+  birth_date: string | null;
+  birth_province: string | null;
+  birth_city: string | null;
+
   // Professional
   work_experience: WorkExperience[];
   skills: string[];
@@ -71,6 +142,7 @@ export interface MemoryProfile {
   // Status
   is_active: boolean;
   completed_at: string | null;
+  onboarding_completed_at: string | null;
 
   // Encrypted fields (sensitive data)
   contact_info_encrypted: string | null;
@@ -296,4 +368,158 @@ export interface OnboardingChatResult {
   reply: string;
   extracted: Partial<OnboardingProfileData>;
   isComplete: boolean;
+}
+
+// ============================================
+// Multi-Agent Chat Types
+// ============================================
+
+export type ClassificationDomain = 'professional' | 'life' | 'mixed' | 'ambiguous';
+
+export interface DatingContext {
+  relationship_status?: string;
+  looking_for_type?: string;
+  preferences?: string[];
+  deal_breakers?: string[];
+}
+
+export interface FriendshipContext {
+  social_style?: string;
+  availability?: string;
+  activity_preferences?: string[];
+}
+
+export interface ProfessionalExtraction {
+  work_experience?: WorkExperience[];
+  skills?: string[];
+  can_offer?: string[];
+  looking_for?: string[];
+  current_goals?: string[];
+  headline?: string;
+}
+
+export interface LifeExtraction {
+  interests?: string[];
+  values?: string[];
+  looking_for?: string[];
+  current_goals?: string[];
+  dating_context?: DatingContext;
+  friendship_context?: FriendshipContext;
+}
+
+export interface CrossDomainItem {
+  item: string;
+  primary_domain: 'professional' | 'life';
+  secondary_domain: 'professional' | 'life';
+  reason: string;
+}
+
+export interface ClassificationResult {
+  domain: ClassificationDomain;
+  confidence: number;
+  professional: ProfessionalExtraction;
+  life: LifeExtraction;
+  cross_domain: CrossDomainItem[];
+}
+
+export interface DomainUpdate {
+  domain: 'professional' | 'life';
+  updates: Partial<OnboardingProfileData>;
+}
+
+export interface MultiAgentChatResult {
+  reply: string;
+  extracted: Partial<OnboardingProfileData>;
+  isComplete: boolean;
+  classification?: ClassificationResult;
+}
+
+// ============================================
+// Emotional Intelligence Types
+// ============================================
+
+export type EmotionalState =
+  | 'excited'      // 兴奋（分享成就）
+  | 'uncertain'    // 不确定（职业迷茫）
+  | 'nostalgic'    // 怀旧（回忆过去）
+  | 'frustrated'   // 沮丧（遇到困难）
+  | 'reflective'   // 反思（深度思考）
+  | 'neutral';     // 中性
+
+export interface EmotionalContext {
+  current_state: EmotionalState;
+  emotional_cues: string[];
+  emotional_shift: 'improving' | 'declining' | 'stable';
+  requires_support: boolean;
+}
+
+// ============================================
+// Conversation Memory Types
+// ============================================
+
+export interface KeyFact {
+  content: string;
+  turnIndex: number;
+  category: 'personal' | 'professional' | 'preference' | 'goal' | 'relationship';
+  type?: string;
+  timestamp: number;
+}
+
+export interface InferredPreferences {
+  verbosity: 'brief' | 'detailed';
+  formality: 'casual' | 'formal';
+  openness: 'reserved' | 'open';
+  pace: 'fast' | 'thoughtful';
+}
+
+export interface ConversationMemory {
+  keyFacts: KeyFact[];
+  topicTrail: string[];
+  inferredPreferences: InferredPreferences;
+}
+
+// ============================================
+// Conversation Flow Types
+// ============================================
+
+export type ConversationPhase =
+  | 'greeting'      // 开场（1-2轮）
+  | 'exploration'   // 探索（主要阶段）
+  | 'deepening'     // 深化（发现兴趣点）
+  | 'wrapping';     // 收尾（确认完成）
+
+export interface PhaseTransition {
+  from: ConversationPhase;
+  to: ConversationPhase;
+  reason: string;
+}
+
+// ============================================
+// User Style Types
+// ============================================
+
+export interface UserStyle {
+  verbosity: 'brief' | 'moderate' | 'detailed';
+  formality: 'casual' | 'neutral' | 'formal';
+  openness: 'reserved' | 'moderate' | 'open';
+  pace: 'fast' | 'thoughtful';
+  emoji_usage: 'none' | 'occasional' | 'frequent';
+  question_style: 'direct' | 'indirect';
+}
+
+export interface StyleAdaptation {
+  responseLength: 'short' | 'moderate' | 'detailed';
+  toneAdjustment: Array<'slightly_formal' | 'relaxed' | 'playful'>;
+  questionApproach: 'gentle' | 'balanced' | 'exploratory';
+  promptHints: string[];
+}
+
+// ============================================
+// Enhanced Classification Types
+// ============================================
+
+export interface EnhancedClassificationResult extends ClassificationResult {
+  emotional_state: EmotionalState;
+  emotional_cues: string[];
+  user_style?: UserStyle;
 }

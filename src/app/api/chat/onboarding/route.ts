@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/requireAuth';
 import { handleOnboardingChat } from '@/lib/ai/claude';
+import { handleMultiAgentChat } from '@/lib/ai/orchestrator';
 import type { ChatMessage, OnboardingProfileData } from '@/types';
 
 // Input limits
@@ -79,11 +80,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await handleOnboardingChat(
-      messages,
-      profileData || {},
-      sessionId || user.id
-    );
+    // Use multi-agent orchestrator when feature flag is enabled
+    const useMultiAgent = process.env.ENABLE_MULTI_AGENT_CHAT === 'true';
+
+    const result = useMultiAgent
+      ? await handleMultiAgentChat(
+          messages,
+          profileData || {},
+          sessionId || user.id
+        )
+      : await handleOnboardingChat(
+          messages,
+          profileData || {},
+          sessionId || user.id
+        );
 
     return NextResponse.json(result);
   } catch (err) {

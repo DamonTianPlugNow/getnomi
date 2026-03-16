@@ -1,243 +1,495 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import ReactMarkdown from 'react-markdown';
 import { useTranslations } from 'next-intl';
-import type { ChatMessage, OnboardingProfileData } from '@/types';
+import {
+  OnboardingProgress,
+  StepLinkedIn,
+  StepBirthInfo,
+  StepEducation,
+  StepWork,
+  StepComplete,
+  ImportConfirmDialog,
+  type EducationEntry,
+  type WorkEntry,
+} from './components';
+import type { TimelineEvent, CreateTimelineEventInput } from '@/types/database';
 
-const STORAGE_KEY = 'nomi_onboarding_state';
+const STORAGE_KEY = 'nomi_onboarding_timeline_state';
+const STORAGE_VERSION = 2; // Increment when schema changes
+const TOTAL_STEPS = 4;
 
-const PROFILE_FIELD_KEYS = [
-  { key: 'display_name', labelKey: 'name' },
-  { key: 'headline', labelKey: 'role' },
-  { key: 'location', labelKey: 'location' },
-  { key: 'work_experience', labelKey: 'experience' },
-  { key: 'skills', labelKey: 'skills' },
-  { key: 'can_offer', labelKey: 'canOffer' },
-  { key: 'looking_for', labelKey: 'lookingFor' },
-  { key: 'current_goals', labelKey: 'goals' },
-  { key: 'interests', labelKey: 'interests' },
-  { key: 'values', labelKey: 'values' },
-  { key: 'intents', labelKey: 'connectionType' },
-] as const;
-
-const SUGGESTION_KEYS = ['designer', 'cofounder', 'friends', 'location'] as const;
-
-interface UserInfo {
-  name?: string;
-  avatar_url?: string;
-  email?: string;
+interface OnboardingState {
+  currentStep: number;
+  linkedinUrl: string;
+  birthData: {
+    year: string;
+    month: string;
+    day: string;
+    province: string;
+    city: string;
+  };
+  educationData: EducationEntry[];
+  workData: WorkEntry[];
 }
 
-interface StoredState {
-  messages: ChatMessage[];
-  profileData: Partial<OnboardingProfileData>;
+interface StoredOnboardingState {
+  version: number;
+  data: OnboardingState;
 }
 
-interface GetInitialMessageParams {
-  userInfo: UserInfo | null;
-  t: ReturnType<typeof useTranslations<'onboarding'>>;
-}
-
-function getInitialMessage({ userInfo, t }: GetInitialMessageParams): string {
-  if (userInfo?.name) {
-    return `${t('greeting', { name: userInfo.name })}\n\n${t('introWithName')}`;
-  }
-  return `${t('greetingNoName')}\n\n${t('introNoName')}`;
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex justify-start">
-      <div className="bg-[#f7f6f3] rounded-xl px-4 py-3">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-[#37352f]/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProgressBar({ progress }: { progress: number }) {
-  return (
-    <div className="w-full bg-[#e3e2de] rounded-full h-1.5">
-      <div
-        className="bg-[#0077cc] h-1.5 rounded-full transition-all duration-500"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  );
-}
+const initialState: OnboardingState = {
+  currentStep: 1,
+  linkedinUrl: '',
+  birthData: {
+    year: '',
+    month: '',
+    day: '',
+    province: '',
+    city: '',
+  },
+  educationData: [],
+  workData: [],
+};
 
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   const t = useTranslations('onboarding');
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [profileData, setProfileData] = useState<Partial<OnboardingProfileData>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [state, setState] = useState<OnboardingState>(initialState);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [showProgress, setShowProgress] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [showComplete, setShowComplete] = useState(false);
+  const [enrichmentWarning, setEnrichmentWarning] = useState<string | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // P0-2: Idempotency protection - ref to prevent double submissions
+  const isSubmittingRef = useRef(false);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+  // P2-1: LinkedIn import merge logic states
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState<{
+    education: EducationEntry[];
+    work: WorkEntry[];
+  } | null>(null);
 
-  const saveState = useCallback((msgs: ChatMessage[], data: Partial<OnboardingProfileData>) => {
+  // P1-4: Save state to localStorage with version control
+  const saveState = useCallback((newState: OnboardingState) => {
     try {
-      const state: StoredState = { messages: msgs, profileData: data };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch { /* ignore */ }
+      const stored: StoredOnboardingState = {
+        version: STORAGE_VERSION,
+        data: newState,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  const loadState = useCallback((): StoredState | null => {
+  // P1-4: Load state from localStorage with version check
+  const loadState = useCallback((): OnboardingState | null => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) return JSON.parse(stored) as StoredState;
-    } catch { /* ignore */ }
-    return null;
+      if (!stored) return null;
+
+      const parsed: StoredOnboardingState = JSON.parse(stored);
+
+      // Version mismatch - clear old data
+      if (parsed.version !== STORAGE_VERSION) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+
+      return parsed.data;
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
   }, []);
 
+  // Clear state
   const clearState = useCallback(() => {
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
+  // Initialize
   useEffect(() => {
     async function initialize() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         router.push('/login');
         return;
       }
 
+      // Check if already completed onboarding
       const { data: existingProfile } = await supabase
         .from('memory_profiles')
-        .select('id')
+        .select('id, onboarding_completed_at')
         .eq('user_id', user.id)
         .single();
 
-      if (existingProfile) {
+      if (existingProfile?.onboarding_completed_at) {
         clearState();
         router.push('/dashboard');
         return;
       }
 
-      const info: UserInfo = {
-        name: user.user_metadata?.name || user.user_metadata?.full_name,
-        avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url,
-        email: user.email,
-      };
-      setUserInfo(info);
-
+      // Load saved state
       const storedState = loadState();
-      if (storedState && storedState.messages.length > 0) {
-        setMessages(storedState.messages);
-        setProfileData(storedState.profileData);
-      } else {
-        const initialMsg: ChatMessage = { role: 'assistant', content: getInitialMessage({ userInfo: info, t }) };
-        setMessages([initialMsg]);
-        if (info.name) {
-          setProfileData({ display_name: info.name });
-        }
+      if (storedState) {
+        setState(storedState);
       }
 
       setIsInitialized(true);
     }
     initialize();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, router, loadState, clearState]);
 
-  const completedFields = PROFILE_FIELD_KEYS.filter(({ key }) => {
-    const v = profileData[key as keyof OnboardingProfileData];
-    return v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
-  });
-  const progress = Math.round((completedFields.length / PROFILE_FIELD_KEYS.length) * 100);
+  // Update state and save
+  const updateState = useCallback(
+    (updates: Partial<OnboardingState>) => {
+      setState((prev) => {
+        const newState = { ...prev, ...updates };
+        saveState(newState);
+        return newState;
+      });
+    },
+    [saveState]
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  // Apply import data (helper function)
+  const applyImportData = useCallback(
+    (data: { education: EducationEntry[]; work: WorkEntry[] }) => {
+      updateState({
+        educationData: data.education,
+        workData: data.work,
+      });
+    },
+    [updateState]
+  );
 
-    const userMessage: ChatMessage = { role: 'user', content: input.trim() };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
+  // P2-1: LinkedIn import with merge logic
+  const handleLinkedInImport = async (): Promise<boolean> => {
+    if (!state.linkedinUrl || !state.linkedinUrl.trim()) return false;
+
+    setIsImporting(true);
+    setImportError(null);
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for API call
 
     try {
-      const response = await fetch('/api/chat/onboarding', {
+      const response = await fetch('/api/linkedin/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, profileData }),
+        body: JSON.stringify({ linkedinUrl: state.linkedinUrl }),
+        signal: controller.signal,
       });
 
-      if (!response.ok) throw new Error('Failed to get response');
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Import failed');
+      }
 
       const data = await response.json();
-      const assistantMessage: ChatMessage = { role: 'assistant', content: data.reply };
-      const updatedMessages = [...newMessages, assistantMessage];
-      setMessages(updatedMessages);
 
-      if (data.extracted) {
-        const newProfileData = { ...profileData, ...data.extracted };
-        setProfileData(newProfileData);
-        saveState(updatedMessages, newProfileData);
-        if (!showProgress && Object.keys(data.extracted).length > 0) {
-          setShowProgress(true);
-        }
+      // Transform imported data
+      const importedEducation: EducationEntry[] = (data.education || []).map(
+        (edu: { type: string; startYear: string; endYear: string; school: string; major?: string }) => ({
+          type: edu.type as EducationEntry['type'],
+          startYear: edu.startYear || '',
+          endYear: edu.endYear || '',
+          province: '',
+          city: '',
+          school: edu.school || '',
+          major: edu.major || '',
+        })
+      );
+
+      const importedWork: WorkEntry[] = (data.work || []).map(
+        (work: {
+          startYear: string;
+          endYear: string;
+          company: string;
+          position: string;
+          description?: string;
+          isCurrent?: boolean;
+        }) => ({
+          startYear: work.startYear || '',
+          endYear: work.endYear || '',
+          isCurrent: work.isCurrent || false,
+          province: '',
+          city: '',
+          company: work.company || '',
+          position: work.position || '',
+          description: work.description || '',
+        })
+      );
+
+      // Check if there's existing data
+      const hasExistingData = state.educationData.length > 0 || state.workData.length > 0;
+      const hasImportData = importedEducation.length > 0 || importedWork.length > 0;
+
+      if (hasExistingData && hasImportData) {
+        // Show confirmation dialog
+        setPendingImportData({ education: importedEducation, work: importedWork });
+        setShowImportConfirm(true);
+        return true; // Import succeeded, waiting for user decision
       }
 
-      if (data.isComplete) {
-        await handleCreateProfile({ ...profileData, ...data.extracted });
-      }
+      // No conflict, apply directly
+      applyImportData({ education: importedEducation, work: importedWork });
+      return true;
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages([...newMessages, {
-        role: 'assistant',
-        content: t('error'),
-      }]);
+      clearTimeout(timeoutId);
+      console.error('LinkedIn import error:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        setImportError('Request timed out. Please try again.');
+      } else {
+        setImportError(error instanceof Error ? error.message : 'Import failed');
+      }
+      return false;
     } finally {
-      setIsLoading(false);
+      setIsImporting(false);
     }
   };
 
-  const handleCreateProfile = async (finalData: Partial<OnboardingProfileData>) => {
-    setIsSubmitting(true);
+  // P2-1: Handle import confirmation (replace or merge)
+  const handleImportConfirm = (mode: 'replace' | 'merge') => {
+    if (!pendingImportData) return;
+
+    if (mode === 'replace') {
+      applyImportData(pendingImportData);
+    } else {
+      // Merge: keep existing + deduplicate and append new
+      const mergedEducation = [...state.educationData];
+      const mergedWork = [...state.workData];
+
+      pendingImportData.education.forEach((edu) => {
+        // Check for duplicates by school and startYear
+        if (!mergedEducation.some((e) => e.school === edu.school && e.startYear === edu.startYear)) {
+          mergedEducation.push(edu);
+        }
+      });
+
+      pendingImportData.work.forEach((work) => {
+        // Check for duplicates by company and startYear
+        if (!mergedWork.some((w) => w.company === work.company && w.startYear === work.startYear)) {
+          mergedWork.push(work);
+        }
+      });
+
+      updateState({ educationData: mergedEducation, workData: mergedWork });
+    }
+
+    setShowImportConfirm(false);
+    setPendingImportData(null);
+  };
+
+  // Build timeline events from form data
+  const buildTimelineEvents = useCallback((): CreateTimelineEventInput[] => {
+    const events: CreateTimelineEventInput[] = [];
+
+    // Birth event
+    if (state.birthData.year) {
+      events.push({
+        event_type: 'birth',
+        start_year: parseInt(state.birthData.year) || undefined,
+        start_month: parseInt(state.birthData.month) || undefined,
+        start_day: parseInt(state.birthData.day) || undefined,
+        province: state.birthData.province || undefined,
+        city: state.birthData.city || undefined,
+        title: t('timeline.birth'),
+        source: 'onboarding',
+      });
+    }
+
+    // Education events
+    state.educationData.forEach((edu) => {
+      if (edu.school || edu.startYear) {
+        const eventType = `education_${edu.type}` as CreateTimelineEventInput['event_type'];
+        events.push({
+          event_type: eventType,
+          start_year: parseInt(edu.startYear) || undefined,
+          end_year: parseInt(edu.endYear) || undefined,
+          province: edu.province || undefined,
+          city: edu.city || undefined,
+          title: t(`education.types.${edu.type}`),
+          institution: edu.school || undefined,
+          description: edu.major || undefined,
+          source: 'onboarding',
+        });
+      }
+    });
+
+    // Work events
+    state.workData.forEach((work) => {
+      if (work.company || work.position) {
+        events.push({
+          event_type: 'work',
+          start_year: parseInt(work.startYear) || undefined,
+          end_year: work.isCurrent ? undefined : parseInt(work.endYear) || undefined,
+          is_current: work.isCurrent,
+          province: work.province || undefined,
+          city: work.city || undefined,
+          title: work.position || t('work.experienceLabel'),
+          institution: work.company || undefined,
+          position: work.position || undefined,
+          description: work.description || undefined,
+          source: 'onboarding',
+        });
+      }
+    });
+
+    return events;
+  }, [state, t]);
+
+  // Complete onboarding
+  const handleComplete = async () => {
+    // P0-2: Idempotency protection - prevent double submissions
+    if (isSubmittingRef.current) return;
+
+    // P2-2: Check if there's any data
+    const hasAnyData =
+      state.birthData.year ||
+      state.educationData.length > 0 ||
+      state.workData.length > 0 ||
+      state.linkedinUrl;
+
+    if (!hasAnyData) {
+      setCompleteError(t('errors.emptyProfile'));
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setIsCompleting(true);
+    setCompleteError(null);
+
     try {
-      const response = await fetch('/api/profile', {
+      const events = buildTimelineEvents();
+
+      const response = await fetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...finalData,
-          intents: finalData.intents || ['professional'],
+          linkedinUrl: state.linkedinUrl || undefined,
+          birthDate:
+            state.birthData.year && state.birthData.month && state.birthData.day
+              ? `${state.birthData.year}-${state.birthData.month.padStart(2, '0')}-${state.birthData.day.padStart(2, '0')}`
+              : undefined,
+          birthProvince: state.birthData.province || undefined,
+          birthCity: state.birthData.city || undefined,
+          timelineEvents: events,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create profile');
+      if (!response.ok) {
+        throw new Error('Failed to complete onboarding');
+      }
 
+      const data = await response.json();
+      setTimelineEvents(data.timelineEvents || []);
+
+      // P2-3: Handle AI enrichment warning
+      if (data.warning) {
+        setEnrichmentWarning(data.warning);
+      }
+
+      setShowComplete(true);
       clearState();
-      router.push('/dashboard');
     } catch (error) {
-      console.error('Profile creation error:', error);
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: t('profileError'),
-      }]);
-      setIsSubmitting(false);
+      console.error('Complete error:', error);
+      setCompleteError(t('errors.completeFailed'));
+      setIsCompleting(false);
+      isSubmittingRef.current = false;
     }
+  };
+
+  // Navigation handlers
+  const handleNext = () => {
+    if (state.currentStep < TOTAL_STEPS) {
+      updateState({ currentStep: state.currentStep + 1 });
+    } else {
+      handleComplete();
+    }
+  };
+
+  const handleBack = () => {
+    if (state.currentStep > 1) {
+      updateState({ currentStep: state.currentStep - 1 });
+    }
+  };
+
+  const handleSkip = () => {
+    handleNext();
+  };
+
+  // Education handlers
+  const handleAddEducation = (type: EducationEntry['type']) => {
+    const newEntry: EducationEntry = {
+      type,
+      startYear: '',
+      endYear: '',
+      province: '',
+      city: '',
+      school: '',
+      major: '',
+    };
+    updateState({ educationData: [...state.educationData, newEntry] });
+  };
+
+  const handleRemoveEducation = (index: number) => {
+    const newData = state.educationData.filter((_, i) => i !== index);
+    updateState({ educationData: newData });
+  };
+
+  const handleEducationChange = (index: number, field: keyof EducationEntry, value: string) => {
+    const newData = [...state.educationData];
+    newData[index] = { ...newData[index], [field]: value };
+    updateState({ educationData: newData });
+  };
+
+  // Work handlers
+  const handleAddWork = () => {
+    const newEntry: WorkEntry = {
+      startYear: '',
+      endYear: '',
+      isCurrent: false,
+      province: '',
+      city: '',
+      company: '',
+      position: '',
+      description: '',
+    };
+    updateState({ workData: [...state.workData, newEntry] });
+  };
+
+  const handleRemoveWork = (index: number) => {
+    const newData = state.workData.filter((_, i) => i !== index);
+    updateState({ workData: newData });
+  };
+
+  const handleWorkChange = (index: number, field: keyof WorkEntry, value: string | boolean) => {
+    const newData = [...state.workData];
+    newData[index] = { ...newData[index], [field]: value };
+    updateState({ workData: newData });
   };
 
   if (!isInitialized) {
@@ -249,7 +501,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#37352f] flex flex-col">
+    <div className="min-h-screen bg-white text-[#37352f]">
       {/* Header */}
       <header className="border-b border-[#e3e2de]">
         <div className="max-w-3xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -259,118 +511,117 @@ export default function OnboardingPage() {
             </div>
             <span className="text-xl font-semibold text-[#37352f]">Nomi</span>
           </Link>
-
-          {showProgress && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-[#37352f]/60">{progress}% complete</span>
-              <div className="w-24">
-                <ProgressBar progress={progress} />
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-8">
-          <div className="space-y-6">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-xl px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-[#0077cc] text-white'
-                      : 'bg-[#f7f6f3] text-[#37352f]'
-                  }`}
-                >
-                  {message.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none [&>p]:m-0 [&>p]:leading-relaxed [&>ul]:my-2 [&>ol]:my-2 [&_strong]:font-semibold">
-                      <ReactMarkdown>
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                  )}
-                </div>
+      {/* Main content */}
+      <main className="max-w-3xl mx-auto px-6 py-8">
+        {showComplete ? (
+          <>
+            <StepComplete timelineEvents={timelineEvents} isLoading={isCompleting} />
+            {enrichmentWarning && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 text-center">
+                {enrichmentWarning}
               </div>
-            ))}
-            {isLoading && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </div>
+            )}
+          </>
+        ) : (
+          <>
+            <OnboardingProgress currentStep={state.currentStep} totalSteps={TOTAL_STEPS} />
 
-          {/* Suggestions */}
-          {messages.length === 1 && !isLoading && (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {SUGGESTION_KEYS.map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setInput(t(`suggestions.${key}`))}
-                  className="px-3 py-1.5 text-sm bg-[#f7f6f3] hover:bg-[#e3e2de] text-[#37352f]/70 rounded-full transition-colors"
-                >
-                  {t(`suggestions.${key}`)}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+            {completeError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 text-center">
+                {completeError}
+              </div>
+            )}
 
-      {/* Input Area */}
-      <div className="border-t border-[#e3e2de] bg-white">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-6 py-4">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={isSubmitting ? t('placeholderCreating') : t('placeholder')}
-              disabled={isLoading || isSubmitting}
-              className="flex-1 px-4 py-3 border border-[#e3e2de] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0077cc]/20 focus:border-[#0077cc] transition-colors text-[#37352f] placeholder:text-[#37352f]/40 disabled:bg-[#f7f6f3]"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading || isSubmitting}
-              className="px-6 py-3 bg-[#0077cc] hover:bg-[#0066b3] disabled:bg-[#e3e2de] disabled:text-[#37352f]/40 text-white font-medium rounded-lg transition-colors"
-            >
-              {isLoading || isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                t('send')
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+            {state.currentStep === 1 && (
+              <StepLinkedIn
+                linkedinUrl={state.linkedinUrl}
+                onLinkedInUrlChange={(url) => updateState({ linkedinUrl: url })}
+                onImport={handleLinkedInImport}
+                onNext={handleNext}
+                onSkip={handleSkip}
+                isImporting={isImporting}
+                importError={importError}
+              />
+            )}
 
-      {/* Progress Sidebar (shown when progress > 0) */}
-      {showProgress && (
-        <div className="fixed right-6 top-24 w-48 p-4 bg-[#f7f6f3] rounded-xl border border-[#e3e2de] hidden lg:block">
-          <p className="text-xs font-semibold text-[#37352f]/50 uppercase tracking-wide mb-3">{t('progress.title')}</p>
-          <div className="space-y-2">
-            {PROFILE_FIELD_KEYS.map(({ key, labelKey }) => {
-              const v = profileData[key as keyof OnboardingProfileData];
-              const filled = v !== undefined && v !== null && (Array.isArray(v) ? v.length > 0 : true);
-              return (
-                <div key={key} className="flex items-center gap-2 text-sm">
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${filled ? 'bg-[#0f7b6c]' : 'bg-[#e3e2de]'}`}>
-                    {filled && (
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </span>
-                  <span className={filled ? 'text-[#37352f]' : 'text-[#37352f]/40'}>{t(`progress.${labelKey}`)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            {state.currentStep === 2 && (
+              <StepBirthInfo
+                birthData={state.birthData}
+                onBirthDataChange={(field, value) =>
+                  updateState({
+                    birthData: { ...state.birthData, [field]: value },
+                  })
+                }
+                onNext={handleNext}
+                onSkip={handleSkip}
+                onBack={handleBack}
+              />
+            )}
+
+            {state.currentStep === 3 && (
+              <StepEducation
+                educationData={state.educationData}
+                onEducationChange={handleEducationChange}
+                onAddEducation={handleAddEducation}
+                onRemoveEducation={handleRemoveEducation}
+                onNext={handleNext}
+                onSkip={handleSkip}
+                onBack={handleBack}
+              />
+            )}
+
+            {state.currentStep === 4 && (
+              <StepWork
+                workData={state.workData}
+                onWorkChange={handleWorkChange}
+                onAddWork={handleAddWork}
+                onRemoveWork={handleRemoveWork}
+                onNext={handleComplete}
+                onSkip={handleSkip}
+                onBack={handleBack}
+              />
+            )}
+          </>
+        )}
+      </main>
+
+      {/* P2-1: Import confirmation dialog */}
+      <ImportConfirmDialog
+        isOpen={showImportConfirm}
+        onClose={() => {
+          setShowImportConfirm(false);
+          setPendingImportData(null);
+        }}
+        onConfirm={handleImportConfirm}
+        existingCount={{
+          education: state.educationData.length,
+          work: state.workData.length,
+        }}
+        importCount={{
+          education: pendingImportData?.education.length || 0,
+          work: pendingImportData?.work.length || 0,
+        }}
+      />
+
+      {/* Animation styles */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
