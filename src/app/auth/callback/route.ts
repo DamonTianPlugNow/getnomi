@@ -1,12 +1,16 @@
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const redirectPath = searchParams.get('redirect') || '/dashboard';
+  const rawRedirect = searchParams.get('redirect') || '/dashboard';
+  // Validate redirect is a safe relative path (prevents open redirect attacks)
+  const isValidRedirect = rawRedirect.startsWith('/') &&
+                          !rawRedirect.startsWith('//') &&
+                          !rawRedirect.includes('://');
+  const redirectPath = isValidRedirect ? rawRedirect : '/dashboard';
   const localeParam = searchParams.get('locale');
 
   const cookieStore = await cookies();
@@ -47,11 +51,6 @@ export async function GET(request: NextRequest) {
 
       if (provider === 'linkedin_oidc' || provider === 'google') {
         try {
-          const adminClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-          );
-
           const updateData: Record<string, unknown> = {
             name: user.user_metadata?.name || user.user_metadata?.full_name,
             avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url,
@@ -71,7 +70,8 @@ export async function GET(request: NextRequest) {
             updateData.google_id = user.user_metadata?.sub;
           }
 
-          const { error: updateError } = await adminClient
+          // Use the authenticated supabase client (RLS policy allows users to update own data)
+          const { error: updateError } = await supabase
             .from('users')
             .update(updateData)
             .eq('id', user.id);

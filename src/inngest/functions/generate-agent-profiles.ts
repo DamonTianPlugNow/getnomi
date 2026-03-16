@@ -5,6 +5,61 @@ import { generateEmbedding, createEmbeddingText } from '@/lib/ai/embedding';
 import type { RelationshipIntent } from '@/types';
 
 /**
+ * Convert timeline events to work_experience format for agent generation
+ */
+function extractWorkExperienceFromTimeline(
+  timelineEvents: Array<{
+    event_type: string;
+    title: string;
+    institution: string | null;
+    position: string | null;
+    description: string | null;
+    is_current: boolean;
+  }>
+): Array<{ company: string; title: string; description?: string | null }> {
+  return timelineEvents
+    .filter((e) => e.event_type === 'work')
+    .map((e) => ({
+      company: e.institution || e.title,
+      title: e.position || e.title,
+      description: e.description,
+    }));
+}
+
+/**
+ * Generate headline from timeline events if not provided
+ */
+function generateHeadlineFromTimeline(
+  timelineEvents: Array<{
+    event_type: string;
+    title: string;
+    institution: string | null;
+    position: string | null;
+    is_current: boolean;
+  }>
+): string | null {
+  // Find current work position
+  const currentWork = timelineEvents.find(
+    (e) => e.event_type === 'work' && e.is_current
+  );
+  if (currentWork) {
+    const position = currentWork.position || currentWork.title;
+    const company = currentWork.institution;
+    return company ? `${position} @ ${company}` : position;
+  }
+
+  // Find most recent work
+  const recentWork = timelineEvents.find((e) => e.event_type === 'work');
+  if (recentWork) {
+    const position = recentWork.position || recentWork.title;
+    const company = recentWork.institution;
+    return company ? `${position} @ ${company}` : position;
+  }
+
+  return null;
+}
+
+/**
  * Generate Agent Profiles when a Memory Profile is created or updated
  * Creates one agent profile per selected intent
  */
@@ -30,9 +85,37 @@ export const generateAgentProfiles = inngest.createFunction(
       return data;
     });
 
+    // Step 1.5: Fetch timeline events to supplement profile data
+    const timelineEvents = await step.run('fetch-timeline-events', async () => {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from('timeline_events')
+        .select('*')
+        .eq('user_id', userId)
+        .order('start_year', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch timeline events:', error);
+        return [];
+      }
+      return data || [];
+    });
+
     if (!memoryProfile.intents || memoryProfile.intents.length === 0) {
       return { message: 'No intents selected, skipping agent generation' };
     }
+
+    // Extract work experience from timeline if not in memory profile
+    const workExperience =
+      (memoryProfile.work_experience as Array<{
+        company: string;
+        title: string;
+        description?: string | null;
+      }>) || extractWorkExperienceFromTimeline(timelineEvents);
+
+    // Generate headline from timeline if not provided
+    const headline =
+      memoryProfile.headline || generateHeadlineFromTimeline(timelineEvents);
 
     // Step 2: Generate agent profile for each intent
     const results = [];
@@ -41,12 +124,8 @@ export const generateAgentProfiles = inngest.createFunction(
         return generateAgentProfile(
           {
             display_name: memoryProfile.display_name,
-            headline: memoryProfile.headline,
-            work_experience: memoryProfile.work_experience as Array<{
-              company: string;
-              title: string;
-              description?: string | null;
-            }>,
+            headline,
+            work_experience: workExperience,
             skills: memoryProfile.skills,
             can_offer: memoryProfile.can_offer,
             looking_for: memoryProfile.looking_for,

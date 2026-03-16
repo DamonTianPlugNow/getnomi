@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { enrichTimelineEvents } from '@/lib/ai/enrich-timeline';
+import { inngest } from '@/inngest/client';
 import type { CreateTimelineEventInput } from '@/types/database';
 
 interface CompleteOnboardingInput {
@@ -76,6 +77,20 @@ export async function POST(request: NextRequest) {
         timelineEvents: [],
         warning: enrichmentWarning,
       });
+    }
+
+    // Trigger profile/created event for agent generation and matching
+    try {
+      await inngest.send({
+        name: 'profile/created',
+        data: {
+          userId: user.id,
+          memoryProfileId: rpcResult.profile_id,
+        },
+      });
+    } catch (inngestError) {
+      console.error('Failed to trigger profile/created event:', inngestError);
+      // Don't fail the request - onboarding is complete, agent generation can be retried
     }
 
     // Fetch the inserted timeline events for the response

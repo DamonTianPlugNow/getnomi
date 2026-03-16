@@ -4,6 +4,27 @@
 
 Nomi (Know me) is a platform that helps users create and maintain their digital world manual - a portable personal context powered by AI conversation. Users can export their profile as a .md file and optionally match with like-minded people.
 
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Next.js App Router                             │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Pages: /login → /onboarding → /dashboard → /profile → /matches │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  API: /api/profile  /api/chat/onboarding  /api/match  /api/meeting │ │
+│  └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                    │                   │                   │
+                    ▼                   ▼                   ▼
+            ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+            │  Supabase   │     │  AI Module  │     │   Inngest   │
+            │  DB + Auth  │     │  Claude +   │     │  Background │
+            │  + Realtime │     │  OpenAI     │     │    Jobs     │
+            └─────────────┘     └─────────────┘     └─────────────┘
+```
+
 ## Tech Stack
 
 - **Frontend/Backend**: Next.js 14 + TypeScript + App Router
@@ -14,6 +35,41 @@ Nomi (Know me) is a platform that helps users create and maintain their digital 
 - **Video Meetings**: Zoom API
 - **Email**: Resend
 - **Deployment**: Vercel
+
+## Quick Reference
+
+### 常用命令
+
+```bash
+pnpm dev              # 启动开发服务器
+pnpm test             # 运行测试
+pnpm type-check       # 类型检查
+pnpm lint             # 代码检查
+npx inngest-cli dev   # 启动 Inngest 开发服务器
+```
+
+### 关键目录
+
+- `src/lib/ai/` - AI 模块 (Orchestrator, Agents, Memory)
+- `src/app/api/` - API Routes
+- `src/inngest/` - 后台任务
+- `.context/` - 项目上下文文档
+- `ADR/` - 架构决策记录
+
+### 代码规范速查
+
+- Server Component: 默认，用于数据获取
+- Client Component: `"use client"` 指令，用于交互
+- 用户输入隔离: `<user_input>` XML 标签
+- 类型定义: `src/types/database.ts`
+- 环境变量: `.env.local` (本地) / Vercel (生产)
+
+### 常见陷阱
+
+1. **Middleware 认证**: OAuth callback 路由需要排除检查
+2. **Streaming**: AI 响应使用 SSE，注意 Edge Runtime 限制
+3. **RLS**: 新表必须配置 Row Level Security
+4. **Inngest**: 本地开发需要单独启动 `inngest-cli dev`
 
 ## Project Structure
 
@@ -102,6 +158,7 @@ Copy `.env.example` to `.env.local` and fill in:
 ## Core Flows
 
 ### Onboarding (AI Chat)
+
 1. User signs up via OAuth
 2. AI chat collects profile information naturally
 3. `profile/created` event triggers `generateAgentProfiles`
@@ -109,16 +166,19 @@ Copy `.env.example` to `.env.local` and fill in:
 5. Profile marked as active
 
 ### Profile Update
+
 1. User clicks "Update with AI" on profile page
 2. `/profile/chat` - AI conversation to update info
 3. Changes saved, agents regenerated if needed
 
 ### Export .md
+
 1. User clicks "Export .md" on profile page
 2. `GET /api/profile/export` generates Markdown
 3. File downloaded as `{display_name}.md`
 
 ### Matching (Optional)
+
 1. User enables matching toggle on profile
 2. `profile/created` or daily cron triggers `findMatches`
 3. Vector search finds candidates (pgvector)
@@ -127,6 +187,7 @@ Copy `.env.example` to `.env.local` and fill in:
 6. Users notified via Realtime + email
 
 ### Meeting
+
 1. Both users approve match
 2. `match/confirmed` triggers `createMeeting`
 3. Users select time slots
@@ -170,3 +231,12 @@ Copy `.env.example` to `.env.local` and fill in:
 - Integration tests: API routes with Supabase local
 - E2E tests: Playwright for critical user flows
 - External services mocked in unit/integration tests
+
+## 扩展文档
+
+- `.context/architecture.md` - 系统架构详解
+- `.context/data-models.md` - 数据模型关系图
+- `.context/api-contracts.md` - API 接口规范
+- `.context/ai-flows.md` - AI 调用流程
+- `.context/glossary.md` - 术语表
+- `ADR/` - 架构决策记录

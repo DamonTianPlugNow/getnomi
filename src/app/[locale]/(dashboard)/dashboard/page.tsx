@@ -30,6 +30,11 @@ export default async function DashboardPage({
     .eq('user_id', user.id)
     .single();
 
+  // Redirect to onboarding if not completed
+  if (!profile?.onboarding_completed_at) {
+    redirect(`/${locale}/onboarding`);
+  }
+
   // Fetch recent matches
   const { data: matches } = await supabase
     .from('matches')
